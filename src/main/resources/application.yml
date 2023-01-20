@@ -1,1 +1,15 @@
-
+spring:
+  jpa:
+    database: mysql
+    hibernate:
+      dialect: org.hibernate.dialect.MySQLDialect
+      ddl-auto: create
+    properties:
+      hiberante:
+        format_sql: true
+    show_sql: true
+  datasource:
+    url: ${CLEARDB_DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
