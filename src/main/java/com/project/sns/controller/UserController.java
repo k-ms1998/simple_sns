@@ -5,6 +5,7 @@ import com.project.sns.dto.request.UserJoinRequest;
 import com.project.sns.dto.request.UserLoginRequest;
 import com.project.sns.dto.response.ResponseBody;
 import com.project.sns.dto.response.UserJoinResponse;
+import com.project.sns.dto.response.UserLoginResponse;
 import com.project.sns.service.UserEntityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -28,7 +29,9 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public void loginUser(@RequestBody UserLoginRequest userLoginRequest) {
-        userEntityService.login(userLoginRequest.getUsername(), userLoginRequest.getPassword());
+    public ResponseBody<UserLoginResponse> loginUser(@RequestBody UserLoginRequest userLoginRequest) {
+        String token = userEntityService.login(userLoginRequest.getUsername(), userLoginRequest.getPassword());
+
+        return ResponseBody.success("OK", UserLoginResponse.of(token));
     }
 }
