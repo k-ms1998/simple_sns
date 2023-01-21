@@ -1,7 +1,9 @@
 package com.project.sns.config;
 
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -14,11 +16,28 @@ public class SpringSecurityConfig {
         return http
                 .csrf().disable()
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest()
-                        .permitAll())
+                        .requestMatchers(
+                                PathRequest.toStaticResources().atCommonLocations()
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/users/join",
+                                "/users/login"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                )
                 .formLogin()
                 .and()
                 .build();
 
+    }
+
+    @Bean
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }
