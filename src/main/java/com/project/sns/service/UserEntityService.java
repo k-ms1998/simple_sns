@@ -5,7 +5,9 @@ import com.project.sns.domain.enums.UserRole;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
 import com.project.sns.repository.UserEntityRepository;
+import com.project.sns.util.JwtTokenUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,12 @@ public class UserEntityService {
 
     private final UserEntityRepository userEntityRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+
+    @Value("${jwt.secret-key}")
+    private String secretKey;
+
+    @Value("${jwt.expire-time}")
+    private Long expireTime;
 
     @Transactional
     public UserEntity join(String username, String password) {
@@ -52,7 +60,10 @@ public class UserEntityService {
             -> 성공시 토큰 생성
          */
         if (isCorrectPassword(userEntity, password, passwordEncoder)) {
-            return "Logged In";
+            /*
+            토큰 생성
+             */
+            return JwtTokenUtils.generateToken(username, secretKey, expireTime);
         }else{
             throw new SnsApplicationException(ErrorCode.INCORRECT_PASSWORD, "");
         }
