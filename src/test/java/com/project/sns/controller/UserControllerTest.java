@@ -3,6 +3,7 @@ package com.project.sns.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.sns.config.SpringSecurityConfig;
 import com.project.sns.domain.UserEntity;
+import com.project.sns.domain.enums.UserRole;
 import com.project.sns.dto.request.UserJoinRequest;
 import com.project.sns.dto.request.UserLoginRequest;
 import com.project.sns.exception.SnsApplicationException;
@@ -44,7 +45,7 @@ public class UserControllerTest {
         String username = "kms";
         String password = "password";
         UserJoinRequest userJoinRequest = createUserJoinRequest(username, password);
-        given(userEntityService.join(username, password)).willReturn(any(UserEntity.class));
+        given(userEntityService.join(username, password)).willReturn(UserEntity.of(username, password, UserRole.USER));
 
         // When && Then
         mockMvc.perform(post("/users/join")
@@ -99,17 +100,18 @@ public class UserControllerTest {
     @Test
     void givenInValidUsername_whenLoggingIn_thenFails() throws Exception {
         // Given
-        String username = "kms";
+        String username = "wronguser";
         String password = "password";
         UserLoginRequest userLoginRequest = createUserLoginRequest(username, password);
-        given(userEntityService.login(username, password)).willReturn("test_token");
+        given(userEntityService.login(username, password))
+                .willThrow(new SnsApplicationException(ErrorCode.NON_EXISTING_USER, String.format("User \'%s\' doesn't exist.", username)));
 
         // When && Then
         mockMvc.perform(post("/users/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsBytes(userLoginRequest)))
                 .andDo(print())
-                .andExpect(status().isNotFound());
+                .andExpect(status().isBadRequest());
 
         then(userEntityService).should().login(username, password);
     }
@@ -140,7 +142,8 @@ public class UserControllerTest {
         String username = "kms";
         String password = "password";
         UserLoginRequest userLoginRequest = createUserLoginRequest(username, password);
-        given(userEntityService.login(username, password)).willReturn("test_token");
+        given(userEntityService.login(username, password))
+                .willThrow(new SnsApplicationException(ErrorCode.INCORRECT_PASSWORD, ""));
 
         // When && Then
         mockMvc.perform(post("/users/login")
