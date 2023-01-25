@@ -9,9 +9,12 @@ import com.project.sns.repository.UserEntityRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -19,6 +22,7 @@ import java.util.Optional;
 
 import static org.mockito.BDDMockito.*;
 
+@ActiveProfiles("test")
 @SpringBootTest
 class UserEntityServiceTest {
 
@@ -27,6 +31,9 @@ class UserEntityServiceTest {
 
     @MockBean
     private UserEntityRepository userEntityRepository;
+
+    @MockBean
+    private BCryptPasswordEncoder passwordEncoder;
 
     @Test
     @DisplayName("[Service] {join()} Given Correct Parameters - Joining User - Success")
@@ -51,8 +58,9 @@ class UserEntityServiceTest {
         // Given
         String username = "kms";
         String password = "password";
+        String encodedPassword = passwordEncoder.encode(password); // 'Unfinished stubbing detected' 에러 해결하기 위해서 미리 암호된 비밀번호 생성
         UserJoinRequest request = createUserJoinRequest(username, password);
-        given(userEntityRepository.findByUsername(username)).willReturn(createOptionalUserEntity(username, password));
+        given(userEntityRepository.findByUsername(username)).willReturn(createOptionalUserEntity(username, encodedPassword));
 
         // When && Then
         Assertions.assertThrows(SnsApplicationException.class, () -> sut.join(username, password));
