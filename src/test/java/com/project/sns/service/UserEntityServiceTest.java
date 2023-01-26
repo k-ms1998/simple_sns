@@ -1,5 +1,6 @@
 package com.project.sns.service;
 
+import com.project.sns.config.SpringSecurityConfig;
 import com.project.sns.domain.UserEntity;
 import com.project.sns.domain.enums.UserRole;
 import com.project.sns.dto.request.UserJoinRequest;
@@ -13,6 +14,7 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -24,6 +26,7 @@ import static org.mockito.BDDMockito.*;
 
 @ActiveProfiles("test")
 @SpringBootTest
+@Import(value = {SpringSecurityConfig.class})
 class UserEntityServiceTest {
 
     @Autowired
@@ -32,7 +35,7 @@ class UserEntityServiceTest {
     @MockBean
     private UserEntityRepository userEntityRepository;
 
-    @MockBean
+    @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
     @Test
@@ -41,7 +44,7 @@ class UserEntityServiceTest {
         // Given
         String username = "kms";
         String password = "password";
-        UserEntity userEntity = createOptionalUserEntity(username, password).get();
+        UserEntity userEntity = createOptionalUserEntity(username, password, passwordEncoder).get();
 
         given(userEntityRepository.findByUsername(username)).willReturn(Optional.empty());
         given(userEntityRepository.save(any(UserEntity.class))).willReturn(userEntity);
@@ -58,9 +61,8 @@ class UserEntityServiceTest {
         // Given
         String username = "kms";
         String password = "password";
-        String encodedPassword = passwordEncoder.encode(password); // 'Unfinished stubbing detected' 에러 해결하기 위해서 미리 암호된 비밀번호 생성
-        UserJoinRequest request = createUserJoinRequest(username, password);
-        given(userEntityRepository.findByUsername(username)).willReturn(createOptionalUserEntity(username, encodedPassword));
+        Optional<UserEntity> userEntity = createOptionalUserEntity(username, password, passwordEncoder);
+        given(userEntityRepository.findByUsername(username)).willReturn(userEntity);
 
         // When && Then
         Assertions.assertThrows(SnsApplicationException.class, () -> sut.join(username, password));
@@ -74,8 +76,8 @@ class UserEntityServiceTest {
         // Given
         String username = "kms";
         String password = "password";
-        UserLoginRequest request = createUserLoginRequest(username, password);
-        given(userEntityRepository.findByUsername(username)).willReturn(createOptionalUserEntity(username, password));
+        Optional<UserEntity> userEntity = createOptionalUserEntity(username, password, passwordEncoder);
+        given(userEntityRepository.findByUsername(username)).willReturn(userEntity);
 
         // When && Then
         Assertions.assertDoesNotThrow(() -> sut.login(username, password));
@@ -105,8 +107,8 @@ class UserEntityServiceTest {
         String username = "kms";
         String password = "password";
         String wrongPassword = "wrongPassword";
-        UserLoginRequest request = createUserLoginRequest(username, wrongPassword);
-        given(userEntityRepository.findByUsername(username)).willReturn(createOptionalUserEntity(username, password));
+        Optional<UserEntity> userEntity = createOptionalUserEntity(username, password, passwordEncoder);
+        given(userEntityRepository.findByUsername(username)).willReturn(userEntity);
 
         // When && Then
         Assertions.assertThrows(SnsApplicationException.class, () -> sut.login(username, wrongPassword));
@@ -122,11 +124,11 @@ class UserEntityServiceTest {
         return UserLoginRequest.of(username, password);
     }
 
-    private static Optional<UserEntity> createOptionalUserEntity(String username, String password) {
+    private static Optional<UserEntity> createOptionalUserEntity(String username, String password, BCryptPasswordEncoder passwordEncoder) {
         return Optional.of(UserEntity.of(
                         1L,
                         username,
-                        password,
+                        passwordEncoder.encode(password),
                         UserRole.USER,
                         Timestamp.from(Instant.now()),
                         Timestamp.from(Instant.now()),
