@@ -9,7 +9,8 @@ public enum ErrorCode {
     DUPLICATE_USER_NAME(HttpStatus.CONFLICT, "Username already exists."),
     NON_EXISTING_USER(HttpStatus.BAD_REQUEST, "User doesn't exist."),
     INCORRECT_PASSWORD(HttpStatus.UNAUTHORIZED, "Check password,"),
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error."),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid Token.");
 
     private HttpStatus status;
     private String message;

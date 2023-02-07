@@ -69,7 +69,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
 
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Error occurred while fetching token.");
             filterChain.doFilter(request, response);
 
