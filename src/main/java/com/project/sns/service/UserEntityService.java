@@ -2,6 +2,7 @@ package com.project.sns.service;
 
 import com.project.sns.domain.UserEntity;
 import com.project.sns.domain.enums.UserRole;
+import com.project.sns.dto.entity.UserDto;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
 import com.project.sns.repository.UserEntityRepository;
@@ -67,6 +68,12 @@ public class UserEntityService {
         }else{
             throw new SnsApplicationException(ErrorCode.INCORRECT_PASSWORD, "");
         }
+    }
+
+    public UserDto loadUserByUsername(String username) {
+        return userEntityRepository.findByUsername(username)
+                .map(UserDto::from)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, String.format("User \'%s\' doesn't exist.", username)));
     }
 
     private static boolean isCorrectPassword(UserEntity userEntity, String password, BCryptPasswordEncoder passwordEncoder) {
