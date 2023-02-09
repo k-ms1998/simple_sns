@@ -10,7 +10,8 @@ public enum ErrorCode {
     NON_EXISTING_USER(HttpStatus.BAD_REQUEST, "User doesn't exist."),
     INCORRECT_PASSWORD(HttpStatus.UNAUTHORIZED, "Check password,"),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error."),
-    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid Token.");
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid Token."),
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "Bad Request.");
 
     private HttpStatus status;
     private String message;
