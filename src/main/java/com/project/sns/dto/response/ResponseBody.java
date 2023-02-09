@@ -21,4 +21,23 @@ public class ResponseBody<T> {
     public static <T> ResponseBody<T> success(String resultCode, T result) {
         return new ResponseBody(resultCode, result);
     }
+
+    public String toStream() {
+        if(this.result == null){
+            return new StringBuilder()
+                    .append("{")
+                    .append("\"resultCode\" : ").append("\"").append(resultCode).append("\"").append(",")
+                    .append("\"result\" : ").append(result)
+                    .append("}")
+                    .toString();
+        }
+
+        return new StringBuilder()
+                .append("{")
+                .append("\"resultCode\" : ").append("\"").append(resultCode).append("\"").append(",")
+                .append("\"result\" : ").append("\"").append(result).append("\"")
+                .append("}")
+                .toString();
+    }
+
 }
