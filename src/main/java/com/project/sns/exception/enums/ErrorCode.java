@@ -11,7 +11,9 @@ public enum ErrorCode {
     INCORRECT_PASSWORD(HttpStatus.UNAUTHORIZED, "Check password,"),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid Token."),
-    BAD_REQUEST(HttpStatus.BAD_REQUEST, "Bad Request.");
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "Bad Request."),
+    POST_NOT_FOUND(HttpStatus.NOT_FOUND, "Post Not Found."),
+    INVALID_PERMISSION(HttpStatus.UNAUTHORIZED, "Permission is invalid.");
 
     private HttpStatus status;
     private String message;
