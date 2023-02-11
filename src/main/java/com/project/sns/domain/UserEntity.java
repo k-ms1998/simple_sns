@@ -1,6 +1,7 @@
 package com.project.sns.domain;
 
 import com.project.sns.domain.enums.UserRole;
+import com.project.sns.dto.entity.UserDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -63,6 +64,10 @@ public class UserEntity {
 
     public static UserEntity of(Long id, String username, String password, UserRole userRole, Timestamp registeredAt, Timestamp updatedAt, Timestamp deletedAt) {
         return new UserEntity(id, username, password, userRole, registeredAt, updatedAt, deletedAt);
+    }
+
+    public UserDto toDto() {
+        return UserDto.from(this);
     }
 
     @Override

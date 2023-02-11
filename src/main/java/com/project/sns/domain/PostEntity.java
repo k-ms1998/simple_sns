@@ -1,6 +1,7 @@
 package com.project.sns.domain;
 
 import com.project.sns.domain.enums.UserRole;
+import com.project.sns.dto.entity.PostDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -59,5 +60,30 @@ public class PostEntity {
 
     public static PostEntity of(Long id, String title, String body, UserEntity userEntity, Timestamp registeredAt, Timestamp updatedAt, Timestamp deletedAt) {
         return new PostEntity(id, title, body, userEntity, registeredAt, updatedAt, deletedAt);
+    }
+
+    public PostDto toDto() {
+        return PostDto.of(
+                this.getId(),
+                this.getTitle(),
+                this.getBody(),
+                this.getUserEntity(),
+                this.getRegisteredAt(),
+                this.getUpdatedAt(),
+                this.getDeletedAt()
+        );
+    }
+
+    public void updatePost(String title, String body) {
+        updateTitle(title);
+        updateBody(body);
+    }
+
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    public void updateBody(String body) {
+        this.body = body;
     }
 }
