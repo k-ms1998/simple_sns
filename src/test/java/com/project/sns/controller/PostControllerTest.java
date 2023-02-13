@@ -157,6 +157,71 @@ class PostControllerTest {
         then(userEntityRepository).should().findByUsername(username);
     }
 
+    @DisplayName("[Controller][Post] Deleting Post - Success")
+    @Test
+    @WithMockUser
+    void givenParameters_whenDeletingPost_thenSuccess() throws Exception {
+        // Given
+        String username = "username";
+        String testToken = JwtTokenUtils.generateToken(username, secretKey, 10000000L);
+        Optional<UserEntity> userEntity = createOptionalUserEntity(username);
+
+        given(userEntityRepository.findByUsername(username)).willReturn(userEntity);
+
+        // When & Then
+        mockMvc.perform(post("/post/delete/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
+                )
+                .andDo(print())
+                .andExpect(status().isOk());
+        then(userEntityRepository).should().findByUsername(username);
+    }
+
+    @DisplayName("[Controller][Post] Given No User - Deleting Post - Fails")
+    @Test
+    @WithAnonymousUser
+    void givenNoUser_whenDeletingPost_thenFails() throws Exception {
+        // Given
+
+        // When & Then
+        mockMvc.perform(post("/post/delete/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @DisplayName("[Controller][Post] Given User Doesn't Match - Deleting Post - Fails")
+    @Test
+    @WithMockUser
+    void givenNoNonMatchingUser_whenDeletingPost_thenFails() throws Exception {
+        // Given
+        doThrow(new SnsApplicationException(ErrorCode.INVALID_PERMISSION)).when(postService).delete(any(), any());
+
+        // When & Then
+        mockMvc.perform(post("/post/delete/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @DisplayName("[Controller][Post] Given Incorrect PostId - Deleting Post - Fails")
+    @Test
+    @WithMockUser
+    void givenIncorrectPostId_whenDeletingPost_thenFails() throws Exception {
+        // Given
+        doThrow(new SnsApplicationException(ErrorCode.POST_NOT_FOUND)).when(postService).delete(any(), any());
+
+        // When & Then
+        mockMvc.perform(post("/post/delete/2")
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
     private static PostCreateRequest createPostCreateRequest(String title, String body) {
         return PostCreateRequest.of(title, body);
     }

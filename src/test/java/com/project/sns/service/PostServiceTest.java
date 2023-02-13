@@ -133,6 +133,24 @@ class PostServiceTest {
         then(postRepository).should().getReferenceById(postId);
     }
 
+    @DisplayName("[Service][Post] Given Parameters - When Deleting Post - Success")
+    @Test
+    void givenParameters_whenDeletingPost_thenSuccess() throws Exception {
+        // Given
+        String username = "username";
+        Long postId = 1L;
+        Optional<UserEntity> optionalUserEntity = createOptionalUserEntity(username);
+        PostEntity postEntity = createPostEntity(postId, "title", "body", optionalUserEntity.get());
+
+        given(userEntityRepository.findByUsername(username)).willReturn(optionalUserEntity);
+        given(postRepository.getReferenceById(postId)).willReturn(postEntity);
+
+        // When & Then
+        Assertions.assertDoesNotThrow(() -> postService.delete(username, postId));
+        then(userEntityRepository).should().findByUsername(username);
+        then(postRepository).should().getReferenceById(postId);
+    }
+
     private static Optional<UserEntity> createOptionalUserEntity(String username) {
         return Optional.of(UserEntity.of(
                         1L,
