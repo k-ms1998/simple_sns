@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.sns.domain.PostEntity;
 import com.project.sns.domain.UserEntity;
 import com.project.sns.domain.enums.UserRole;
+import com.project.sns.dto.entity.PostDto;
 import com.project.sns.dto.request.PostCreateRequest;
 import com.project.sns.dto.request.PostUpdateRequest;
 import com.project.sns.exception.SnsApplicationException;
@@ -112,9 +113,10 @@ class PostControllerTest {
         PostUpdateRequest request = createPostUpdateRequest(title, body);
         String testToken = JwtTokenUtils.generateToken(username, secretKey, 10000000L);
         Optional<UserEntity> userEntity = createOptionalUserEntity(username);
+        PostDto postDto = createPostEntity(userEntity.get()).toDto();
 
         given(userEntityRepository.findByUsername(username)).willReturn(userEntity);
-        doNothing().when(postService).update(any(), any(), any(), any());
+        given(postService.update(any(), any(), any(), any())).willReturn(postDto);
 
         // When & Then
         mockMvc.perform(post("/post/update/1")

@@ -80,11 +80,13 @@ class PostServiceTest {
 
         given(userEntityRepository.findByUsername(any())).willReturn(userEntity);
         given(postRepository.getReferenceById(any())).willReturn(postEntity);
+        given(postRepository.save(any())).willReturn(postEntity);
 
         // When & Then
         Assertions.assertDoesNotThrow(() -> postService.update(title, body, username, postId));
         then(userEntityRepository).should().findByUsername(username);
         then(postRepository).should().getReferenceById(postId);
+        then(postRepository).should().save(any());
     }
 
     @DisplayName("[Service][Post] Given Non Existent Post - When Updating Post - Fails")
