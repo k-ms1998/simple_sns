@@ -31,4 +31,11 @@ public class PostController {
         return ResponseBody.success("Success", PostResponse.fromPostDto(postDto));
     }
 
+    @PostMapping("/delete/{postId}")
+    public ResponseBody delete(@PathVariable Long postId, Authentication authentication) {
+        postService.delete(authentication.getName(), postId);
+
+        return ResponseBody.success("Success");
+    }
+
 }
