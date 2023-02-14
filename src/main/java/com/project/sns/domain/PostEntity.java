@@ -16,9 +16,9 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@SQLDelete(sql = "UPDATED \"post\" SET deleted_at = NOW() where id=?") // sql delete 가 일어날떄 deleted_at 값 업데이트
+@SQLDelete(sql = "UPDATE post SET deleted_at = NOW() where id=?") // sql delete 가 일어날떄 deleted_at 값 업데이트
 @Where(clause = "deleted_at is NULL") // select 할때 해당 where 문도 추가되어서 실행 -> deleted_at 이 NULL 이면 삭제되지 않은 튜플들만 반환
-@Table(name = "\"post\"")
+@Table(name = "post")
 public class PostEntity {
 
     @Id
