@@ -79,12 +79,14 @@ class PostServiceTest {
         PostEntity postEntity = createPostEntity(postId, title, body, userEntity.get());
 
         given(userEntityRepository.findByUsername(any())).willReturn(userEntity);
-        given(postRepository.getReferenceById(any())).willReturn(postEntity);
+        given(postRepository.findById(any())).willReturn(Optional.of(postEntity));
+        given(postRepository.save(any())).willReturn(postEntity);
 
         // When & Then
         Assertions.assertDoesNotThrow(() -> postService.update(title, body, username, postId));
         then(userEntityRepository).should().findByUsername(username);
-        then(postRepository).should().getReferenceById(postId);
+        then(postRepository).should().findById(any());
+        then(postRepository).should().save(any());
     }
 
     @DisplayName("[Service][Post] Given Non Existent Post - When Updating Post - Fails")
@@ -98,13 +100,13 @@ class PostServiceTest {
         Optional<UserEntity> userEntity = createOptionalUserEntity(username);
 
         given(userEntityRepository.findByUsername(username)).willReturn(userEntity);
-        given(postRepository.getReferenceById(invalidPostId)).willReturn(null);
+        given(postRepository.findById(invalidPostId)).willReturn(Optional.empty());
 
         // When & Then
         SnsApplicationException e = Assertions.assertThrows(SnsApplicationException.class, () -> postService.update(title, body, username, invalidPostId));
         Assertions.assertEquals(e.getErrorCode(), ErrorCode.POST_NOT_FOUND);
         then(userEntityRepository).should().findByUsername(username);
-        then(postRepository).should().getReferenceById(invalidPostId);
+        then(postRepository).should().findById(invalidPostId);
     }
 
     @DisplayName("[Service][Post] Given Non Matching Username - When Updating Post - Fails")
@@ -122,13 +124,31 @@ class PostServiceTest {
         PostEntity postEntity = createPostEntity(postId, title, body, postUserEntity.get());
 
         given(userEntityRepository.findByUsername(username)).willReturn(userEntity);
-        given(postRepository.getReferenceById(postId)).willReturn(postEntity);
+        given(postRepository.findById(any())).willReturn(Optional.of(postEntity));
 
         // When & Then
         SnsApplicationException e = Assertions.assertThrows(SnsApplicationException.class, () -> postService.update(title, body, username, postId));
         Assertions.assertEquals(e.getErrorCode(), ErrorCode.INVALID_PERMISSION);
         then(userEntityRepository).should().findByUsername(username);
-        then(postRepository).should().getReferenceById(postId);
+        then(postRepository).should().findById(any());
+    }
+
+    @DisplayName("[Service][Post] Given Parameters - When Deleting Post - Success")
+    @Test
+    void givenParameters_whenDeletingPost_thenSuccess() throws Exception {
+        // Given
+        String username = "username";
+        Long postId = 1L;
+        Optional<UserEntity> optionalUserEntity = createOptionalUserEntity(username);
+        PostEntity postEntity = createPostEntity(postId, "title", "body", optionalUserEntity.get());
+
+        given(userEntityRepository.findByUsername(username)).willReturn(optionalUserEntity);
+        given(postRepository.findById(any())).willReturn(Optional.of(postEntity));
+
+        // When & Then
+        Assertions.assertDoesNotThrow(() -> postService.delete(username, postId));
+        then(userEntityRepository).should().findByUsername(username);
+        then(postRepository).should().findById(any());
     }
 
     private static Optional<UserEntity> createOptionalUserEntity(String username) {

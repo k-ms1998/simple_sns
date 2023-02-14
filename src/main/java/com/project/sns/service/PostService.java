@@ -42,10 +42,8 @@ public class PostService {
                 .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, "Check User."));
 
         // Post 가져오기
-        PostEntity post = postRepository.getReferenceById(postId);
-        if (post == null) {
-            throw new SnsApplicationException(ErrorCode.POST_NOT_FOUND);
-        }
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
 
         // 가져온 Post의 작성자와 업데이트 할려는 유저가 동일한지 확인
         if(userDoesNotMatch(userName, post)){
@@ -57,8 +55,27 @@ public class PostService {
         return postRepository.save(post).toDto();
     }
 
+    @Transactional
+    public void delete(String userName, Long postId) {
+        //존재하는 유저인지 확인
+        UserEntity userEntity = userEntityRepository.findByUsername(userName)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, "Check User."));
+
+        // Post 찾기
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+
+        // 가져온 Post의 작성자와 업데이트 할려는 유저가 동일한지 확인
+        if(userDoesNotMatch(userName, post)){
+            throw new SnsApplicationException(ErrorCode.INVALID_PERMISSION, "User does not match.");
+        }
+
+        // Post 삭제
+        postRepository.delete(post);
+
+    }
+
     private boolean userDoesNotMatch(String userName, PostEntity post) {
         return !userName.equals(post.getUserEntity().getUsername());
     }
-
 }

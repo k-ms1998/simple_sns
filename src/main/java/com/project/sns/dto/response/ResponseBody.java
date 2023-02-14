@@ -18,6 +18,10 @@ public class ResponseBody<T> {
         return new ResponseBody<>(errorCode, null);
     }
 
+    public static ResponseBody<Void> success(String resultCode) {
+        return new ResponseBody(resultCode, null);
+    }
+
     public static <T> ResponseBody<T> success(String resultCode, T result) {
         return new ResponseBody(resultCode, result);
     }

@@ -17,7 +17,7 @@ import java.util.Objects;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@SQLDelete(sql = "UPDATED \"user\" SET deleted_at = NOW() where id=?") // sql delete 가 일어날떄 deleted_at 값 업데이트
+@SQLDelete(sql = "UPDATE \"user\" SET deleted_at = NOW() where id=?") // sql delete 가 일어날떄 deleted_at 값 업데이트
 @Where(clause = "deleted_at is NULL") // select 할때 해당 where 문도 추가되어서 실행 -> deleted_at 이 NULL 이면 삭제되지 않은 튜플들만 반환
 @Table(name = "\"user\"") // PostgreSQL 에서는 이미 user라는 테이블이 존재하기 때문에, 우리가 설계한 user 테이블이라는 것을 알려주기 위해서 "user" 으로 표신
 public class UserEntity {
