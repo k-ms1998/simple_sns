@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -149,6 +151,34 @@ class PostServiceTest {
         Assertions.assertDoesNotThrow(() -> postService.delete(username, postId));
         then(userEntityRepository).should().findByUsername(username);
         then(postRepository).should().findById(any());
+    }
+
+    @DisplayName("[Service][Post] Given Parameters - When Fetching All Posts - Success")
+    @Test
+    void givenParameters_whenFetchingAllPosts_thenSuccess() throws Exception {
+        // Given
+        Pageable pageable = Pageable.ofSize(10);
+        given(postRepository.findAll(pageable)).willReturn(Page.empty());
+
+        // When && Then
+        Assertions.assertDoesNotThrow(() -> postService.fetchAllPosts(pageable));
+        then(postRepository).should().findAll(pageable);
+    }
+
+    @DisplayName("[Service][Post] Given Parameters - When Fetching My Posts - Success")
+    @Test
+    void givenParameters_whenFetchingMyPosts_thenSuccess() throws Exception {
+        // Given
+        Pageable pageable = Pageable.ofSize(10);
+        String username = "username";
+        UserEntity userEntity = createOptionalUserEntity(username).get();
+        given(userEntityRepository.findByUsername(username)).willReturn(Optional.of(userEntity));
+        given(postRepository.findAllByUserEntity(pageable, userEntity)).willReturn(Page.empty());
+
+        // When && Then
+        Assertions.assertDoesNotThrow(() -> postService.fetchMyPosts(pageable, username));
+        then(postRepository).should().findAllByUserEntity(pageable, userEntity);
+        then(userEntityRepository).should().findByUsername(username);
     }
 
     private static Optional<UserEntity> createOptionalUserEntity(String username) {

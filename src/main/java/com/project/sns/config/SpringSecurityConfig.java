@@ -32,7 +32,8 @@ public class SpringSecurityConfig {
         return (web) -> web.ignoring().requestMatchers(
                 "/",
                 "/users/join",
-                "/users/login"
+                "/users/login",
+                "/post"
         );
     }
 

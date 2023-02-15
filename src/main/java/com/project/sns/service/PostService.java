@@ -8,6 +8,8 @@ import com.project.sns.exception.enums.ErrorCode;
 import com.project.sns.repository.PostRepository;
 import com.project.sns.repository.UserEntityRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,25 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserEntityRepository userEntityRepository;
+
+    public Page<PostDto> fetchAllPosts(Pageable pageable) {
+        return postRepository.findAll(pageable)
+                .map(PostDto::from);
+    }
+
+    public Page<PostDto> fetchMyPosts(Pageable pageable, String userName) {
+        /*
+        존재하는 유저인지 확인
+         */
+        UserEntity userEntity = userEntityRepository.findByUsername(userName)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, "Check User."));
+
+        /*
+        유저의 모든 포스트들 가져오기
+         */
+        return postRepository.findAllByUserEntity(pageable, userEntity)
+                .map(PostDto::from);
+    }
 
     @Transactional
     public void create(String title, String body, String userName) {

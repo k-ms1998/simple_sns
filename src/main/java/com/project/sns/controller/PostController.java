@@ -7,6 +7,8 @@ import com.project.sns.dto.response.PostResponse;
 import com.project.sns.dto.response.ResponseBody;
 import com.project.sns.service.PostService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +18,22 @@ import org.springframework.web.bind.annotation.*;
 public class PostController {
 
     private final PostService postService;
+
+    @GetMapping
+    public ResponseBody<Page<PostResponse>> fetchAll(Pageable pageable) {
+        Page<PostDto> result = postService.fetchAllPosts(pageable);
+        Page<PostResponse> responsePage = result.map(PostResponse::fromPostDto);
+
+        return ResponseBody.success("Success", responsePage);
+    }
+
+    @GetMapping("/my")
+    public ResponseBody<Page<PostResponse>> fetchMy(Pageable pageable, Authentication authentication) {
+        Page<PostDto> result = postService.fetchMyPosts(pageable, authentication.getName());
+        Page<PostResponse> responsePage = result.map(PostResponse::fromPostDto);
+
+        return ResponseBody.success("Success", responsePage);
+    }
 
     @PostMapping("/create")
     public ResponseBody<Void> create(@RequestBody PostCreateRequest request, Authentication authentication) {
