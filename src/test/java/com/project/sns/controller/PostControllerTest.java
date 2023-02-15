@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
@@ -31,6 +32,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 import static org.mockito.BDDMockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -220,6 +222,45 @@ class PostControllerTest {
                 )
                 .andDo(print())
                 .andExpect(status().isNotFound());
+    }
+
+    @DisplayName("[Controller][Post] Fetch Posts - Success")
+    @Test
+    @WithAnonymousUser
+    void givenNothing_whenFetchingPosts_thenSuccess() throws Exception {
+        // Given
+        given(postService.fetchAllPosts(any())).willReturn(Page.empty());
+
+        // When & Then
+        mockMvc.perform(get("/post")
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print())
+                .andExpect(status().isOk());
+        then(postService).should().fetchAllPosts(any());
+    }
+
+    @DisplayName("[Controller][Post] Fetch My Posts - Success")
+    @Test
+    @WithMockUser
+    void givenNothing_whenFetchingMyPosts_thenSuccess() throws Exception {
+        // Given
+        String username = "username";
+        String testToken = JwtTokenUtils.generateToken(username, secretKey, 10000000L);
+        Optional<UserEntity> userEntity = createOptionalUserEntity(username);
+
+        given(userEntityRepository.findByUsername(username)).willReturn(userEntity);
+        given(postService.fetchMyPosts(any(), any())).willReturn(Page.empty());
+
+        // When & Then
+        mockMvc.perform(get("/post/my")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
+                )
+                .andDo(print())
+                .andExpect(status().isOk());
+        then(userEntityRepository).should().findByUsername(username);
+        then(postService).should().fetchMyPosts(any(), any());
     }
 
     private static PostCreateRequest createPostCreateRequest(String title, String body) {
