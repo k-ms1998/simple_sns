@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/post")
+@RequestMapping("/posts")
 public class PostController {
 
     private final PostService postService;
@@ -42,16 +42,16 @@ public class PostController {
         return ResponseBody.success("Success", null);
     }
 
-    @PostMapping("/update/{postId}")
-    public ResponseBody<PostResponse> update(@RequestBody PostUpdateRequest request, @PathVariable Long postId, Authentication authentication) {
-        PostDto postDto = postService.update(request.getTitle(), request.getBody(), authentication.getName(), postId);
+    @PostMapping("/update/{id}")
+    public ResponseBody<PostResponse> update(@RequestBody PostUpdateRequest request, @PathVariable Long id, Authentication authentication) {
+        PostDto postDto = postService.update(request.getTitle(), request.getBody(), authentication.getName(), Long.valueOf(id));
 
         return ResponseBody.success("Success", PostResponse.fromPostDto(postDto));
     }
 
-    @PostMapping("/delete/{postId}")
-    public ResponseBody delete(@PathVariable Long postId, Authentication authentication) {
-        postService.delete(authentication.getName(), postId);
+    @PostMapping("/delete/{id}")
+    public ResponseBody delete(@PathVariable Long id, Authentication authentication) {
+        postService.delete(authentication.getName(), Long.valueOf(id));
 
         return ResponseBody.success("Success");
     }

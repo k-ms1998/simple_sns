@@ -15,6 +15,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 public class PostResponse {
 
+    private Long id;
     private String title;
     private String body;
     private String username;
@@ -24,6 +25,7 @@ public class PostResponse {
 
     public static PostResponse fromPostDto(PostDto postDto) {
         return new PostResponse(
+                postDto.getId(),
                 postDto.getTitle(),
                 postDto.getBody(),
                 postDto.getUserDto().getUsername(),
