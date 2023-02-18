@@ -53,9 +53,6 @@ class PostControllerTest {
     @MockBean
     private PostService postService;
 
-    @MockBean
-    private PostRepository postRepository;
-
     @Value("${jwt.secret-key}")
     private String secretKey;
 
@@ -75,7 +72,7 @@ class PostControllerTest {
         doNothing().when(postService).create(any(), any(), any());
 
     // When & Then
-        mockMvc.perform(post("/post/create")
+        mockMvc.perform(post("/posts/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request))
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
@@ -95,7 +92,7 @@ class PostControllerTest {
         PostCreateRequest request = createPostCreateRequest(title, body);
 
         // When & Then
-        mockMvc.perform(post("/post/create")
+        mockMvc.perform(post("/posts/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request))
                 ).andDo(print())
@@ -121,7 +118,7 @@ class PostControllerTest {
         given(postService.update(any(), any(), any(), any())).willReturn(postDto);
 
         // When & Then
-        mockMvc.perform(post("/post/update/1")
+        mockMvc.perform(post("/posts/update/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request))
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
@@ -149,7 +146,7 @@ class PostControllerTest {
 
         // When & Then
         doThrow(new SnsApplicationException(ErrorCode.POST_NOT_FOUND, "")).when(postService).update(any(), any(), eq(username), eq(postId));
-        mockMvc.perform(post("/post/update/" + postId)
+        mockMvc.perform(post("/posts/update/" + postId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request))
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
@@ -171,7 +168,7 @@ class PostControllerTest {
         given(userEntityRepository.findByUsername(username)).willReturn(userEntity);
 
         // When & Then
-        mockMvc.perform(post("/post/delete/1")
+        mockMvc.perform(post("/posts/delete/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
                 )
@@ -187,7 +184,7 @@ class PostControllerTest {
         // Given
 
         // When & Then
-        mockMvc.perform(post("/post/delete/1")
+        mockMvc.perform(post("/posts/delete/1")
                         .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andDo(print())
@@ -202,7 +199,7 @@ class PostControllerTest {
         doThrow(new SnsApplicationException(ErrorCode.INVALID_PERMISSION)).when(postService).delete(any(), any());
 
         // When & Then
-        mockMvc.perform(post("/post/delete/1")
+        mockMvc.perform(post("/posts/delete/1")
                         .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andDo(print())
@@ -217,7 +214,7 @@ class PostControllerTest {
         doThrow(new SnsApplicationException(ErrorCode.POST_NOT_FOUND)).when(postService).delete(any(), any());
 
         // When & Then
-        mockMvc.perform(post("/post/delete/2")
+        mockMvc.perform(post("/posts/delete/2")
                         .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andDo(print())
@@ -232,7 +229,7 @@ class PostControllerTest {
         given(postService.fetchAllPosts(any())).willReturn(Page.empty());
 
         // When & Then
-        mockMvc.perform(get("/post")
+        mockMvc.perform(get("/posts")
                         .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andDo(print())
@@ -253,7 +250,7 @@ class PostControllerTest {
         given(postService.fetchMyPosts(any(), any())).willReturn(Page.empty());
 
         // When & Then
-        mockMvc.perform(get("/post/my")
+        mockMvc.perform(get("/posts/my")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
                 )
@@ -261,6 +258,75 @@ class PostControllerTest {
                 .andExpect(status().isOk());
         then(userEntityRepository).should().findByUsername(username);
         then(postService).should().fetchMyPosts(any(), any());
+    }
+
+    @DisplayName("[Controller][Post] Given Logged In - When Up-Voting Post - Success")
+    @Test
+    @WithAnonymousUser
+    void givenLoggedIn_whenUpVotingPost_thenSuccess() throws Exception {
+        // Given
+        Long postId = 1L;
+        String username = "username";
+        String testToken = JwtTokenUtils.generateToken(username, secretKey, 10000000L);
+        Optional<UserEntity> userEntity = createOptionalUserEntity(username);
+        PostEntity postEntity = createPostEntity(userEntity.get());
+
+        given(userEntityRepository.findByUsername(username)).willReturn(userEntity);
+
+        // When & Then
+        mockMvc.perform(get("/posts/upvote/" + postId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
+                )
+                .andDo(print())
+                .andExpect(status().isOk());
+        then(userEntityRepository).should().findByUsername(username);
+    }
+
+    @DisplayName("[Controller][Post] Given Not Logged In - When Up-Voting Post - Fails")
+    @Test
+    @WithAnonymousUser
+    void givenNotLoggedIn_whenUpVotingPost_thenFails() throws Exception {
+        // Given
+        Long postId = 1L;
+        String username = "username";
+        String testToken = JwtTokenUtils.generateToken(username, secretKey, 10000000L);
+
+        given(userEntityRepository.findByUsername(username)).willThrow(new SnsApplicationException(ErrorCode.NON_EXISTING_USER));
+        doThrow(new SnsApplicationException(ErrorCode.NON_EXISTING_USER)).when(postService).upvote(any(), any());
+
+        // When & Then
+        mockMvc.perform(get("/posts/upvote/" + postId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
+                )
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+        then(userEntityRepository).should().findByUsername(username);
+    }
+
+    @DisplayName("[Controller][Post] Given Post Doesn't Exist - When Up-Voting Post - Fails")
+    @Test
+    @WithAnonymousUser
+    void givenNonExistingPost_whenUpVotingPost_thenFails() throws Exception {
+        // Given
+        Long postId = 1L;
+        String username = "username";
+        String testToken = JwtTokenUtils.generateToken(username, secretKey, 10000000L);
+        Optional<UserEntity> userEntity = createOptionalUserEntity(username);
+
+        given(userEntityRepository.findByUsername(username)).willReturn(userEntity);
+        doThrow(new SnsApplicationException(ErrorCode.POST_NOT_FOUND)).when(postService).upvote(any(), any());
+
+        // When & Then
+        mockMvc.perform(get("/posts/upvote/" + postId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
+                )
+                .andDo(print())
+                .andExpect(status().isNotFound());
+        then(userEntityRepository).should().findByUsername(username);
+
     }
 
     private static PostCreateRequest createPostCreateRequest(String title, String body) {

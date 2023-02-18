@@ -33,7 +33,7 @@ public class SpringSecurityConfig {
                 "/",
                 "/users/join",
                 "/users/login",
-                "/post"
+                "/posts"
         );
     }
 
