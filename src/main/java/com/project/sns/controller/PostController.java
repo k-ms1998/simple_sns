@@ -63,4 +63,11 @@ public class PostController {
         return ResponseBody.success("Success");
     }
 
+    @GetMapping("/upvote/{id}/count")
+    public ResponseBody fetchUpVotesCount(@PathVariable Long id) {
+        Long upVotesCount = postService.fetchUpVotesCount(id);
+
+        return ResponseBody.success("Success", upVotesCount);
+    }
+
 }
