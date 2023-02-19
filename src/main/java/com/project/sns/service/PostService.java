@@ -117,6 +117,15 @@ public class PostService {
         upVoteEntityRepository.save(upVoteEntity);
     }
 
+    public Long fetchUpVotesCount(Long id) {
+        // Post 찾기
+        PostEntity post = postRepository.findById(id)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+
+        // Upvote 갯수 찾아서 반환
+        return upVoteEntityRepository.findByPostEntityAndUpVoted(post, true);
+    }
+
     private boolean userDoesNotMatch(String userName, PostEntity post) {
         return !userName.equals(post.getUserEntity().getUsername());
     }
