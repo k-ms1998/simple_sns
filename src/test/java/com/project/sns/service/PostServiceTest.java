@@ -6,6 +6,7 @@ import com.project.sns.domain.enums.UserRole;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
 import com.project.sns.repository.PostRepository;
+import com.project.sns.repository.UpVoteEntityRepository;
 import com.project.sns.repository.UserEntityRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -36,6 +37,9 @@ class PostServiceTest {
 
     @MockBean
     private PostRepository postRepository;
+
+    @MockBean
+    private UpVoteEntityRepository upVoteEntityRepository;
 
     @DisplayName("[Service][Post] Given Parameters - When Creating Post - Success")
     @Test
@@ -179,6 +183,25 @@ class PostServiceTest {
         Assertions.assertDoesNotThrow(() -> postService.fetchMyPosts(pageable, username));
         then(postRepository).should().findAllByUserEntity(pageable, userEntity);
         then(userEntityRepository).should().findByUsername(username);
+    }
+
+    @DisplayName("[Service][Get] Given Parameters - When Fetching Up Vote Counts - Success")
+    @Test
+    void givenParameters_whenFetchingUpVoteCounts_thenSuccess() throws Exception {
+        // Given
+        Long postId = 1L;
+        PostEntity postEntity = createPostEntity(postId, "title", "body", UserEntity.of("username", "password"));
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(postEntity));
+        given(upVoteEntityRepository.findByPostEntityAndUpVoted(postEntity, true)).willReturn(1L);
+
+        // When
+        Long result = postService.fetchUpVotesCount(postId);
+
+        // Then
+        Assertions.assertEquals(1L, result);
+        then(upVoteEntityRepository).should().findByPostEntityAndUpVoted(postEntity, true);
+        then(postRepository).should().findById(postId);
     }
 
     private static Optional<UserEntity> createOptionalUserEntity(String username) {

@@ -329,6 +329,23 @@ class PostControllerTest {
 
     }
 
+    @DisplayName("[Controller][GET] Given Post - When Fetching Up Vote Count - Success")
+    @Test
+    @WithAnonymousUser
+    void givenPost_whenFetchingUpVoteCount_thenSuccess() throws Exception {
+        // Given
+        Long postId = 1L;
+        given(postService.fetchUpVotesCount(postId)).willReturn(1L);
+
+        // When & Then
+        mockMvc.perform(get("/posts/upvote/" + postId + "/count")
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print())
+                .andExpect(status().isOk());
+        then(postService).should().fetchUpVotesCount(postId);
+    }
+
     private static PostCreateRequest createPostCreateRequest(String title, String body) {
         return PostCreateRequest.of(title, body);
     }
