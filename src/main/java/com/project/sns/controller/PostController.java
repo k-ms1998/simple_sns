@@ -56,4 +56,11 @@ public class PostController {
         return ResponseBody.success("Success");
     }
 
+    @PostMapping("/upvote/{id}")
+    public ResponseBody upvote(@PathVariable Long id, Authentication authentication) {
+        postService.upvote(authentication.getName(), id);
+
+        return ResponseBody.success("Success");
+    }
+
 }
