@@ -274,7 +274,7 @@ class PostControllerTest {
         given(userEntityRepository.findByUsername(username)).willReturn(userEntity);
 
         // When & Then
-        mockMvc.perform(get("/posts/upvote/" + postId)
+        mockMvc.perform(post("/posts/upvote/" + postId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
                 )
@@ -296,7 +296,7 @@ class PostControllerTest {
         doThrow(new SnsApplicationException(ErrorCode.NON_EXISTING_USER)).when(postService).upvote(any(), any());
 
         // When & Then
-        mockMvc.perform(get("/posts/upvote/" + postId)
+        mockMvc.perform(post("/posts/upvote/" + postId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
                 )
@@ -319,7 +319,7 @@ class PostControllerTest {
         doThrow(new SnsApplicationException(ErrorCode.POST_NOT_FOUND)).when(postService).upvote(any(), any());
 
         // When & Then
-        mockMvc.perform(get("/posts/upvote/" + postId)
+        mockMvc.perform(post("/posts/upvote/" + postId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
                 )
