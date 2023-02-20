@@ -274,7 +274,7 @@ class PostControllerTest {
         given(userEntityRepository.findByUsername(username)).willReturn(userEntity);
 
         // When & Then
-        mockMvc.perform(get("/posts/upvote/" + postId)
+        mockMvc.perform(post("/posts/upvote/" + postId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
                 )
@@ -296,7 +296,7 @@ class PostControllerTest {
         doThrow(new SnsApplicationException(ErrorCode.NON_EXISTING_USER)).when(postService).upvote(any(), any());
 
         // When & Then
-        mockMvc.perform(get("/posts/upvote/" + postId)
+        mockMvc.perform(post("/posts/upvote/" + postId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
                 )
@@ -319,7 +319,7 @@ class PostControllerTest {
         doThrow(new SnsApplicationException(ErrorCode.POST_NOT_FOUND)).when(postService).upvote(any(), any());
 
         // When & Then
-        mockMvc.perform(get("/posts/upvote/" + postId)
+        mockMvc.perform(post("/posts/upvote/" + postId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
                 )
@@ -327,6 +327,23 @@ class PostControllerTest {
                 .andExpect(status().isNotFound());
         then(userEntityRepository).should().findByUsername(username);
 
+    }
+
+    @DisplayName("[Controller][GET] Given Post - When Fetching Up Vote Count - Success")
+    @Test
+    @WithAnonymousUser
+    void givenPost_whenFetchingUpVoteCount_thenSuccess() throws Exception {
+        // Given
+        Long postId = 1L;
+        given(postService.fetchUpVotesCount(postId)).willReturn(1L);
+
+        // When & Then
+        mockMvc.perform(get("/posts/upvote/" + postId + "/count")
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print())
+                .andExpect(status().isOk());
+        then(postService).should().fetchUpVotesCount(postId);
     }
 
     private static PostCreateRequest createPostCreateRequest(String title, String body) {

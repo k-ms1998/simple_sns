@@ -1,11 +1,13 @@
 package com.project.sns.service;
 
 import com.project.sns.domain.PostEntity;
+import com.project.sns.domain.UpVoteEntity;
 import com.project.sns.domain.UserEntity;
 import com.project.sns.dto.entity.PostDto;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
 import com.project.sns.repository.PostRepository;
+import com.project.sns.repository.UpVoteEntityRepository;
 import com.project.sns.repository.UserEntityRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserEntityRepository userEntityRepository;
+    private final UpVoteEntityRepository upVoteEntityRepository;
 
     public Page<PostDto> fetchAllPosts(Pageable pageable) {
         return postRepository.findAll(pageable)
@@ -94,6 +97,33 @@ public class PostService {
         // Post 삭제
         postRepository.delete(post);
 
+    }
+
+    @Transactional
+    public void upvote(String userName, Long id) {
+        //존재하는 유저인지 확인
+        UserEntity userEntity = userEntityRepository.findByUsername(userName)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, "Check User."));
+
+        // Post 찾기
+        PostEntity post = postRepository.findById(id)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+
+        // UpVote 찾기 -> UserEntity와 PostEntity 로 존재하는지 찾기 -> 존재하지 않으면 새로 생성해서 반환
+        UpVoteEntity upVoteEntity = upVoteEntityRepository.findByUserEntityAndPostEntity(userEntity, post)
+                .orElse(UpVoteEntity.of(userEntity, post, false));
+
+        upVoteEntity.updateUpVote();
+        upVoteEntityRepository.save(upVoteEntity);
+    }
+
+    public Long fetchUpVotesCount(Long id) {
+        // Post 찾기
+        PostEntity post = postRepository.findById(id)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+
+        // Upvote 갯수 찾아서 반환
+        return upVoteEntityRepository.findByPostEntityAndUpVoted(post, true);
     }
 
     private boolean userDoesNotMatch(String userName, PostEntity post) {
