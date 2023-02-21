@@ -34,9 +34,9 @@ class UpVoteEntityRepositoryTest {
     @Test
     void givenTestData_whenCallingFindByPostEntityAndUpVoted_thenSuccess() throws Exception {
         // Given
-        UserEntity userA = UserEntity.of("usernameA", "password");
-        UserEntity userB = UserEntity.of("usernameB", "password");
-        UserEntity userC = UserEntity.of("usernameC", "password");
+        UserEntity userA = UserEntity.of(1L, "usernameA", "password");
+        UserEntity userB = UserEntity.of(2L, "usernameB", "password");
+        UserEntity userC = UserEntity.of(3L, "usernameC", "password");
         PostEntity post = PostEntity.of("title", "body", userA);
 
         UpVoteEntity upVoteA = UpVoteEntity.of(userA, post, true);
