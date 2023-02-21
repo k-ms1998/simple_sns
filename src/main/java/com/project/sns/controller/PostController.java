@@ -1,6 +1,7 @@
 package com.project.sns.controller;
 
 import com.project.sns.dto.entity.PostDto;
+import com.project.sns.dto.request.CommentCreateRequest;
 import com.project.sns.dto.request.PostCreateRequest;
 import com.project.sns.dto.request.PostUpdateRequest;
 import com.project.sns.dto.response.PostResponse;
@@ -70,4 +71,10 @@ public class PostController {
         return ResponseBody.success("Success", upVotesCount);
     }
 
+    @PostMapping("/comment/{id}")
+    public ResponseBody addComment(@RequestBody CommentCreateRequest commentCreateRequest, @PathVariable Long id, Authentication authentication) {
+        postService.addComment(commentCreateRequest, id, authentication.getName());
+
+        return ResponseBody.success("Success");
+    }
 }
