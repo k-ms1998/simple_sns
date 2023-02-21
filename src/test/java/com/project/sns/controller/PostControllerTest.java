@@ -5,6 +5,7 @@ import com.project.sns.domain.PostEntity;
 import com.project.sns.domain.UserEntity;
 import com.project.sns.domain.enums.UserRole;
 import com.project.sns.dto.entity.PostDto;
+import com.project.sns.dto.request.CommentCreateRequest;
 import com.project.sns.dto.request.PostCreateRequest;
 import com.project.sns.dto.request.PostUpdateRequest;
 import com.project.sns.exception.SnsApplicationException;
@@ -344,6 +345,33 @@ class PostControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk());
         then(postService).should().fetchUpVotesCount(postId);
+    }
+
+    @DisplayName("[Controller][Post] Given Comment Request - When Adding Comment - Success")
+    @Test
+    @WithMockUser
+    void givenCommentRequest_whenAddingComment_thenSuccess() throws Exception {
+        // Given
+        Long postId = 1L;
+        String username = "username";
+        CommentCreateRequest request = createCommentCreateRequest("comment");
+        String testToken = JwtTokenUtils.generateToken(username, secretKey, 10000000L);
+
+        doNothing().when(postService).addComment(any(), any(), any());
+
+        // When & Then
+        mockMvc.perform(post("/posts/comment/" + postId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
+                        .content(objectMapper.writeValueAsBytes(request))
+                )
+                .andDo(print())
+                .andExpect(status().isOk());
+        then(postService).should().addComment(any(), any(), any());
+    }
+
+    private static CommentCreateRequest createCommentCreateRequest(String comment) {
+        return CommentCreateRequest.of(comment);
     }
 
     private static PostCreateRequest createPostCreateRequest(String title, String body) {
