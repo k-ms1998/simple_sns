@@ -9,7 +9,11 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "comment")
+@Table(name = "comment",
+        indexes = {
+            @Index(name = "post_id_idx", columnList = "post_id")
+        }
+)
 public class CommentEntity {
 
     @Id

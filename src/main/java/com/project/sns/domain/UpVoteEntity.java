@@ -8,7 +8,11 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(name = "upvote")
+@Table(name = "upvote",
+    indexes = {
+        @Index(name = "post_id_idx", columnList = "post_id")
+    }
+)
 public class UpVoteEntity {
 
     @Id
