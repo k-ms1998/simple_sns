@@ -1,11 +1,15 @@
 package com.project.sns.service;
 
+import com.project.sns.domain.CommentEntity;
 import com.project.sns.domain.PostEntity;
 import com.project.sns.domain.UpVoteEntity;
 import com.project.sns.domain.UserEntity;
 import com.project.sns.dto.entity.PostDto;
+import com.project.sns.dto.request.CommentCreateRequest;
+import com.project.sns.dto.entity.CommentDto;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
+import com.project.sns.repository.CommentEntityRepository;
 import com.project.sns.repository.PostRepository;
 import com.project.sns.repository.UpVoteEntityRepository;
 import com.project.sns.repository.UserEntityRepository;
@@ -23,6 +27,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserEntityRepository userEntityRepository;
     private final UpVoteEntityRepository upVoteEntityRepository;
+    private final CommentEntityRepository commentEntityRepository;
 
     public Page<PostDto> fetchAllPosts(Pageable pageable) {
         return postRepository.findAll(pageable)
@@ -124,6 +129,30 @@ public class PostService {
 
         // Upvote 갯수 찾아서 반환
         return upVoteEntityRepository.findByPostEntityAndUpVoted(post, true);
+    }
+
+    @Transactional
+    public void addComment(CommentCreateRequest commentCreateRequest, Long id, String userName) {
+        //존재하는 유저인지 확인
+        UserEntity userEntity = userEntityRepository.findByUsername(userName)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, "Check User."));
+
+        // Post 찾기
+        PostEntity postEntity = postRepository.findById(id)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+
+        CommentEntity commentEntity = CommentEntity.of(commentCreateRequest.getComment(), userEntity, postEntity);
+        commentEntityRepository.save(commentEntity);
+    }
+
+    public Page<CommentDto> fetchAllComments(Long id, Pageable pageable) {
+        // Post 찾기
+        PostEntity postEntity = postRepository.findById(id)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+
+        return commentEntityRepository.findAllByPostEntity(postEntity, pageable)
+                .map(CommentDto::fromEntity);
+
     }
 
     private boolean userDoesNotMatch(String userName, PostEntity post) {

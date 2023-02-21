@@ -1,10 +1,13 @@
 package com.project.sns.service;
 
+import com.project.sns.domain.CommentEntity;
 import com.project.sns.domain.PostEntity;
 import com.project.sns.domain.UserEntity;
 import com.project.sns.domain.enums.UserRole;
+import com.project.sns.dto.request.CommentCreateRequest;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
+import com.project.sns.repository.CommentEntityRepository;
 import com.project.sns.repository.PostRepository;
 import com.project.sns.repository.UpVoteEntityRepository;
 import com.project.sns.repository.UserEntityRepository;
@@ -40,6 +43,9 @@ class PostServiceTest {
 
     @MockBean
     private UpVoteEntityRepository upVoteEntityRepository;
+
+    @MockBean
+    private CommentEntityRepository commentEntityRepository;
 
     @DisplayName("[Service][Post] Given Parameters - When Creating Post - Success")
     @Test
@@ -202,6 +208,33 @@ class PostServiceTest {
         Assertions.assertEquals(1L, result);
         then(upVoteEntityRepository).should().findByPostEntityAndUpVoted(postEntity, true);
         then(postRepository).should().findById(postId);
+    }
+
+    @DisplayName("[Service] Given Comment Create Request - When Adding Comment - Success")
+    @Test
+    void givenCommentCreateRequest_whenAddingComment_thenSuccess() throws Exception {
+        // Given
+        Long postId = 1L;
+        String username = "username";
+        CommentCreateRequest request = createCommentCreateRequest("comment");
+        Optional<UserEntity> optionalUserEntity = createOptionalUserEntity(username);
+        PostEntity postEntity = createPostEntity(postId, "title", "body", optionalUserEntity.get());
+
+
+        given(userEntityRepository.findByUsername(any())).willReturn(optionalUserEntity);
+        given(postRepository.findById(any())).willReturn(Optional.of(postEntity));
+        given(commentEntityRepository.save(any())).willReturn(CommentEntity.of("comment", optionalUserEntity.get(), postEntity));
+
+        // When && Then
+        Assertions.assertDoesNotThrow(() -> postService.addComment(request, postId, username));
+
+        then(userEntityRepository).should().findByUsername(any());
+        then(postRepository).should().findById(any());
+        then(commentEntityRepository).should().save(any());
+    }
+
+    private static CommentCreateRequest createCommentCreateRequest(String comment) {
+        return CommentCreateRequest.of(comment);
     }
 
     private static Optional<UserEntity> createOptionalUserEntity(String username) {

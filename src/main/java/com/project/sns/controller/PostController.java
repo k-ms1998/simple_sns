@@ -1,8 +1,11 @@
 package com.project.sns.controller;
 
+import com.project.sns.dto.entity.CommentDto;
 import com.project.sns.dto.entity.PostDto;
+import com.project.sns.dto.request.CommentCreateRequest;
 import com.project.sns.dto.request.PostCreateRequest;
 import com.project.sns.dto.request.PostUpdateRequest;
+import com.project.sns.dto.response.CommentResponse;
 import com.project.sns.dto.response.PostResponse;
 import com.project.sns.dto.response.ResponseBody;
 import com.project.sns.service.PostService;
@@ -70,4 +73,18 @@ public class PostController {
         return ResponseBody.success("Success", upVotesCount);
     }
 
+    @PostMapping("/comment/{id}")
+    public ResponseBody addComment(@RequestBody CommentCreateRequest commentCreateRequest, @PathVariable Long id, Authentication authentication) {
+        postService.addComment(commentCreateRequest, id, authentication.getName());
+
+        return ResponseBody.success("Success");
+    }
+
+    @GetMapping("/comment/{id}")
+    public ResponseBody<Page<CommentResponse>> fetchComments(@PathVariable Long id, Pageable pageable) {
+        Page<CommentResponse> comments = postService.fetchAllComments(id, pageable)
+                .map(CommentResponse::fromDto);
+
+        return ResponseBody.success("Success", comments);
+    }
 }
