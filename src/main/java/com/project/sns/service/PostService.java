@@ -38,8 +38,7 @@ public class PostService {
         /*
         존재하는 유저인지 확인
          */
-        UserEntity userEntity = userEntityRepository.findByUsername(userName)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, "Check User."));
+        UserEntity userEntity = getUserEntityOrThrowException(userName);
 
         /*
         유저의 모든 포스트들 가져오기
@@ -53,8 +52,7 @@ public class PostService {
         /*
         존재하는 유저인지 확인
          */
-        UserEntity userEntity = userEntityRepository.findByUsername(userName)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, "Check User."));
+        UserEntity userEntity = getUserEntityOrThrowException(userName);
 
 
         /*
@@ -67,12 +65,10 @@ public class PostService {
     @Transactional
     public PostDto update(String title, String body, String userName, Long postId) {
         // 존재하는 유저인지 확인
-        UserEntity userEntity = userEntityRepository.findByUsername(userName)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, "Check User."));
+        getUserEntityOrThrowException(userName);
 
         // Post 가져오기
-        PostEntity post = postRepository.findById(postId)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+        PostEntity post = getPostEntityOrThrowException(postId);
 
         // 가져온 Post의 작성자와 업데이트 할려는 유저가 동일한지 확인
         if(userDoesNotMatch(userName, post)){
@@ -87,12 +83,10 @@ public class PostService {
     @Transactional
     public void delete(String userName, Long postId) {
         //존재하는 유저인지 확인
-        UserEntity userEntity = userEntityRepository.findByUsername(userName)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, "Check User."));
+        getUserEntityOrThrowException(userName);
 
         // Post 찾기
-        PostEntity post = postRepository.findById(postId)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+        PostEntity post = getPostEntityOrThrowException(postId);
 
         // 가져온 Post의 작성자와 업데이트 할려는 유저가 동일한지 확인
         if(userDoesNotMatch(userName, post)){
@@ -107,12 +101,10 @@ public class PostService {
     @Transactional
     public void upvote(String userName, Long id) {
         //존재하는 유저인지 확인
-        UserEntity userEntity = userEntityRepository.findByUsername(userName)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, "Check User."));
+        UserEntity userEntity = getUserEntityOrThrowException(userName);
 
         // Post 찾기
-        PostEntity post = postRepository.findById(id)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+        PostEntity post = getPostEntityOrThrowException(id);
 
         // UpVote 찾기 -> UserEntity와 PostEntity 로 존재하는지 찾기 -> 존재하지 않으면 새로 생성해서 반환
         UpVoteEntity upVoteEntity = upVoteEntityRepository.findByUserEntityAndPostEntity(userEntity, post)
@@ -124,8 +116,7 @@ public class PostService {
 
     public Long fetchUpVotesCount(Long id) {
         // Post 찾기
-        PostEntity post = postRepository.findById(id)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+        PostEntity post = getPostEntityOrThrowException(id);
 
         // Upvote 갯수 찾아서 반환
         return upVoteEntityRepository.findByPostEntityAndUpVoted(post, true);
@@ -134,12 +125,10 @@ public class PostService {
     @Transactional
     public void addComment(CommentCreateRequest commentCreateRequest, Long id, String userName) {
         //존재하는 유저인지 확인
-        UserEntity userEntity = userEntityRepository.findByUsername(userName)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, "Check User."));
+        UserEntity userEntity = getUserEntityOrThrowException(userName);
 
         // Post 찾기
-        PostEntity postEntity = postRepository.findById(id)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+        PostEntity postEntity = getPostEntityOrThrowException(id);
 
         CommentEntity commentEntity = CommentEntity.of(commentCreateRequest.getComment(), userEntity, postEntity);
         commentEntityRepository.save(commentEntity);
@@ -147,12 +136,23 @@ public class PostService {
 
     public Page<CommentDto> fetchAllComments(Long id, Pageable pageable) {
         // Post 찾기
-        PostEntity postEntity = postRepository.findById(id)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+        PostEntity postEntity = getPostEntityOrThrowException(id);
 
         return commentEntityRepository.findAllByPostEntity(postEntity, pageable)
                 .map(CommentDto::fromEntity);
 
+    }
+
+    private UserEntity getUserEntityOrThrowException(String userName) {
+        UserEntity userEntity = userEntityRepository.findByUsername(userName)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, "Check User."));
+        return userEntity;
+    }
+
+    private PostEntity getPostEntityOrThrowException(Long id) {
+        PostEntity postEntity = postRepository.findById(id)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+        return postEntity;
     }
 
     private boolean userDoesNotMatch(String userName, PostEntity post) {
