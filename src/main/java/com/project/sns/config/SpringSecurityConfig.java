@@ -35,7 +35,8 @@ public class SpringSecurityConfig {
                 "/users/login",
                 "/posts",
                 "/posts/upvote/{id}/count"
-        );
+        ).requestMatchers(HttpMethod.GET,
+                "/posts/comment/{id}");
     }
 
     @Bean

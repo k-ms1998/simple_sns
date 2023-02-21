@@ -6,6 +6,7 @@ import com.project.sns.domain.UpVoteEntity;
 import com.project.sns.domain.UserEntity;
 import com.project.sns.dto.entity.PostDto;
 import com.project.sns.dto.request.CommentCreateRequest;
+import com.project.sns.dto.entity.CommentDto;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
 import com.project.sns.repository.CommentEntityRepository;
@@ -142,6 +143,16 @@ public class PostService {
 
         CommentEntity commentEntity = CommentEntity.of(commentCreateRequest.getComment(), userEntity, postEntity);
         commentEntityRepository.save(commentEntity);
+    }
+
+    public Page<CommentDto> fetchAllComments(Long id, Pageable pageable) {
+        // Post 찾기
+        PostEntity postEntity = postRepository.findById(id)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND));
+
+        return commentEntityRepository.findAllByPostEntity(postEntity, pageable)
+                .map(CommentDto::fromEntity);
+
     }
 
     private boolean userDoesNotMatch(String userName, PostEntity post) {
