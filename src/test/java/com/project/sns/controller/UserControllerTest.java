@@ -9,14 +9,23 @@ import com.project.sns.dto.request.UserLoginRequest;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
 import com.project.sns.service.UserEntityService;
+import com.project.sns.util.JwtTokenUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -37,6 +46,9 @@ public class UserControllerTest {
 
     @MockBean
     private UserEntityService userEntityService;
+
+    @Value("${jwt.secret-key}")
+    private String secretKey;
 
     @DisplayName("[View] Given Non-Existing Username - Saves User - Success")
     @Test
@@ -153,6 +165,25 @@ public class UserControllerTest {
                 .andExpect(status().isUnauthorized());
 
         then(userEntityService).should().login(username, password);
+    }
+
+    @DisplayName("[View] Given User - Fetching Notifications - Success")
+    @Test
+    @WithMockUser
+    void givenUser_whenFetchingNotifications_thenSuccess() throws Exception {
+        // Given
+        String username = "username";
+        String testToken = JwtTokenUtils.generateToken(username, secretKey, 10000000L);
+        given(userEntityService.fetchNotifications(any(), any())).willReturn(Page.empty());
+
+        // When && Then
+        mockMvc.perform(get("/users/notifications")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + testToken)
+                )
+                .andDo(print())
+                .andExpect(status().isOk());
+        then(userEntityService).should().fetchNotifications(any(), any());
     }
 
     private static UserJoinRequest createUserJoinRequest(String username, String password) {
