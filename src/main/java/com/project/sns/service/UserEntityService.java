@@ -2,13 +2,17 @@ package com.project.sns.service;
 
 import com.project.sns.domain.UserEntity;
 import com.project.sns.domain.enums.UserRole;
+import com.project.sns.dto.entity.NotificationDto;
 import com.project.sns.dto.entity.UserDto;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
+import com.project.sns.repository.NotificationEntityRepository;
 import com.project.sns.repository.UserEntityRepository;
 import com.project.sns.util.JwtTokenUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserEntityService {
 
     private final UserEntityRepository userEntityRepository;
+    private final NotificationEntityRepository notificationEntityRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Value("${jwt.secret-key}")
@@ -82,5 +87,19 @@ public class UserEntityService {
 
     private boolean areParametersInValid(String username, String password) {
         return (username == null || username.isBlank() || password == null || password.isBlank());
+    }
+
+    public Page<NotificationDto> fetchNotifications(Pageable pageable, String userName) {
+        // User 가 존재하는지 확인
+        UserEntity userEntity = getUserEntityOrThrowException(userName);
+
+        return notificationEntityRepository.findAllByUserEntity(userEntity, pageable)
+                .map(NotificationDto::fromEntity);
+    }
+
+    private UserEntity getUserEntityOrThrowException(String userName) {
+        UserEntity userEntity = userEntityRepository.findByUsername(userName)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, "Check User."));
+        return userEntity;
     }
 }

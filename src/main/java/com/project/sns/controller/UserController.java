@@ -3,16 +3,17 @@ package com.project.sns.controller;
 import com.project.sns.domain.UserEntity;
 import com.project.sns.dto.request.UserJoinRequest;
 import com.project.sns.dto.request.UserLoginRequest;
+import com.project.sns.dto.response.NotificationResponse;
 import com.project.sns.dto.response.ResponseBody;
 import com.project.sns.dto.response.UserJoinResponse;
 import com.project.sns.dto.response.UserLoginResponse;
 import com.project.sns.service.UserEntityService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,4 +35,13 @@ public class UserController {
 
         return ResponseBody.success("OK", UserLoginResponse.of(token));
     }
+
+    @GetMapping("/notifications")
+    public ResponseBody<Page<NotificationResponse>> fetchNotifications(Pageable pageable, Authentication authentication) {
+        Page<NotificationResponse> notifications = userEntityService.fetchNotifications(pageable, authentication.getName())
+                .map(NotificationResponse::fromDto);
+
+        return ResponseBody.success("Success", notifications);
+    }
+
 }
