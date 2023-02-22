@@ -214,18 +214,43 @@ class PostServiceTest {
     void givenCommentCreateRequest_whenAddingComment_thenSuccess() throws Exception {
         // Given
         Long postId = 1L;
-        String username = "username";
+        String usernameA = "usernameA";
+        String usernameB = "usernameB";
         CommentCreateRequest request = createCommentCreateRequest("comment");
-        Optional<UserEntity> optionalUserEntity = createOptionalUserEntity(username);
-        PostEntity postEntity = createPostEntity(postId, "title", "body", optionalUserEntity.get());
+        UserEntity userEntityA = createUserEntity(1L, usernameA);
+        UserEntity userEntityB = createUserEntity(2L, usernameB);
+        PostEntity postEntity = createPostEntity(postId, "title", "body", userEntityA);
 
-        given(userEntityRepository.findByUsername(any())).willReturn(optionalUserEntity);
+        given(userEntityRepository.findByUsername(usernameB)).willReturn(Optional.of(userEntityB));
         given(postRepository.findById(any())).willReturn(Optional.of(postEntity));
-        given(commentEntityRepository.save(any())).willReturn(CommentEntity.of("comment", optionalUserEntity.get(), postEntity));
+        given(commentEntityRepository.save(any())).willReturn(CommentEntity.of("comment", userEntityB, postEntity));
         given(notificationEntityRepository.save(any()))
                 .willReturn(NotificationEntity.of(
-                        optionalUserEntity.get(), NotificationType.NEW_COMMENT_ON_POST, NotificationArgs.of(1L, 1L)
+                        userEntityB, NotificationType.NEW_COMMENT_ON_POST, NotificationArgs.of(postEntity.getUserEntity().getId(), postId)
                 ));
+
+        // When && Then
+        Assertions.assertDoesNotThrow(() -> postService.addComment(request, postId, usernameB));
+
+        then(userEntityRepository).should().findByUsername(any());
+        then(postRepository).should().findById(any());
+        then(commentEntityRepository).should().save(any());
+        then(notificationEntityRepository).should().save(any());
+    }
+
+    @DisplayName("[Service] Given User Comments On Own Post - When Adding Comment - Success And Not Create Notification")
+    @Test
+    void givenUserCommentsOnOwnPost_whenAddingComment_thenSuccessAndNotCreateNotification() throws Exception {
+        // Given
+        Long postId = 1L;
+        String username = "username";
+        CommentCreateRequest request = createCommentCreateRequest("comment");
+        UserEntity userEntity = createUserEntity(1L, username);
+        PostEntity postEntity = createPostEntity(postId, "title", "body", userEntity);
+
+        given(userEntityRepository.findByUsername(username)).willReturn(Optional.of(userEntity));
+        given(postRepository.findById(any())).willReturn(Optional.of(postEntity));
+        given(commentEntityRepository.save(any())).willReturn(CommentEntity.of("comment", userEntity, postEntity));
 
         // When && Then
         Assertions.assertDoesNotThrow(() -> postService.addComment(request, postId, username));
@@ -233,7 +258,7 @@ class PostServiceTest {
         then(userEntityRepository).should().findByUsername(any());
         then(postRepository).should().findById(any());
         then(commentEntityRepository).should().save(any());
-        then(notificationEntityRepository).should().save(any());
+        then(notificationEntityRepository).shouldHaveNoInteractions();
     }
 
     private static CommentCreateRequest createCommentCreateRequest(String comment) {
@@ -250,6 +275,18 @@ class PostServiceTest {
                         Timestamp.from(Instant.now()),
                         Timestamp.from(Instant.now())
                 )
+        );
+    }
+
+    private static UserEntity createUserEntity(Long id, String username) {
+        return UserEntity.of(
+                id,
+                username,
+                "password",
+                UserRole.USER,
+                Timestamp.from(Instant.now()),
+                Timestamp.from(Instant.now()),
+                Timestamp.from(Instant.now())
         );
     }
 
