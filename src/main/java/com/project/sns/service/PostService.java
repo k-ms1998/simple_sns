@@ -1,18 +1,13 @@
 package com.project.sns.service;
 
-import com.project.sns.domain.CommentEntity;
-import com.project.sns.domain.PostEntity;
-import com.project.sns.domain.UpVoteEntity;
-import com.project.sns.domain.UserEntity;
+import com.project.sns.domain.*;
+import com.project.sns.domain.enums.NotificationType;
+import com.project.sns.dto.entity.CommentDto;
 import com.project.sns.dto.entity.PostDto;
 import com.project.sns.dto.request.CommentCreateRequest;
-import com.project.sns.dto.entity.CommentDto;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
-import com.project.sns.repository.CommentEntityRepository;
-import com.project.sns.repository.PostRepository;
-import com.project.sns.repository.UpVoteEntityRepository;
-import com.project.sns.repository.UserEntityRepository;
+import com.project.sns.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +23,7 @@ public class PostService {
     private final UserEntityRepository userEntityRepository;
     private final UpVoteEntityRepository upVoteEntityRepository;
     private final CommentEntityRepository commentEntityRepository;
+    private final NotificationEntityRepository notificationEntityRepository;
 
     public Page<PostDto> fetchAllPosts(Pageable pageable) {
         return postRepository.findAll(pageable)
@@ -112,6 +108,18 @@ public class PostService {
 
         upVoteEntity.updateUpVote();
         upVoteEntityRepository.save(upVoteEntity);
+
+
+        // 좋아요가 눌렀을 경우 && 좋아요 누른 유저와 포스트 작성한 유저가 다를 경우 알림 생성
+        if(upVoteEntity.isUpVoted()){
+            if(isNotSameUser(userEntity, post)){
+                notificationEntityRepository.save(NotificationEntity.of(
+                        post.getUserEntity(),
+                        NotificationType.NEW_LIKE_ON_POST,
+                        NotificationArgs.of(userEntity.getId(), post.getId())
+                ));
+            }
+        }
     }
 
     public Long fetchUpVotesCount(Long id) {
@@ -130,8 +138,22 @@ public class PostService {
         // Post 찾기
         PostEntity postEntity = getPostEntityOrThrowException(id);
 
+        // 댓글 저장
         CommentEntity commentEntity = CommentEntity.of(commentCreateRequest.getComment(), userEntity, postEntity);
         commentEntityRepository.save(commentEntity);
+
+        /*
+        알림 생성:
+            -> 댓글을 단 포스트의 주인에게, 현재 로그인한 유저가 댓글을 달았다는 알림 생성
+            -> 댓글 작성자랑 포스트 작성자가 다를 경우에만 알림 생성
+         */
+        if(isNotSameUser(userEntity, postEntity)){
+            notificationEntityRepository.save(NotificationEntity.of(
+                    postEntity.getUserEntity(),
+                    NotificationType.NEW_COMMENT_ON_POST,
+                    NotificationArgs.of(userEntity.getId(), postEntity.getId())
+            ));
+        }
     }
 
     public Page<CommentDto> fetchAllComments(Long id, Pageable pageable) {
@@ -157,5 +179,9 @@ public class PostService {
 
     private boolean userDoesNotMatch(String userName, PostEntity post) {
         return !userName.equals(post.getUserEntity().getUsername());
+    }
+
+    private boolean isNotSameUser(UserEntity userEntity, PostEntity postEntity) {
+        return !(userEntity.getUsername().equals(postEntity.getUserEntity().getUsername()));
     }
 }

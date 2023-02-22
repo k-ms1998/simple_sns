@@ -1,16 +1,12 @@
 package com.project.sns.service;
 
-import com.project.sns.domain.CommentEntity;
-import com.project.sns.domain.PostEntity;
-import com.project.sns.domain.UserEntity;
+import com.project.sns.domain.*;
+import com.project.sns.domain.enums.NotificationType;
 import com.project.sns.domain.enums.UserRole;
 import com.project.sns.dto.request.CommentCreateRequest;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
-import com.project.sns.repository.CommentEntityRepository;
-import com.project.sns.repository.PostRepository;
-import com.project.sns.repository.UpVoteEntityRepository;
-import com.project.sns.repository.UserEntityRepository;
+import com.project.sns.repository.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,6 +42,9 @@ class PostServiceTest {
 
     @MockBean
     private CommentEntityRepository commentEntityRepository;
+
+    @MockBean
+    private NotificationEntityRepository notificationEntityRepository;
 
     @DisplayName("[Service][Post] Given Parameters - When Creating Post - Success")
     @Test
@@ -215,15 +214,43 @@ class PostServiceTest {
     void givenCommentCreateRequest_whenAddingComment_thenSuccess() throws Exception {
         // Given
         Long postId = 1L;
+        String usernameA = "usernameA";
+        String usernameB = "usernameB";
+        CommentCreateRequest request = createCommentCreateRequest("comment");
+        UserEntity userEntityA = createUserEntity(1L, usernameA);
+        UserEntity userEntityB = createUserEntity(2L, usernameB);
+        PostEntity postEntity = createPostEntity(postId, "title", "body", userEntityA);
+
+        given(userEntityRepository.findByUsername(usernameB)).willReturn(Optional.of(userEntityB));
+        given(postRepository.findById(any())).willReturn(Optional.of(postEntity));
+        given(commentEntityRepository.save(any())).willReturn(CommentEntity.of("comment", userEntityB, postEntity));
+        given(notificationEntityRepository.save(any()))
+                .willReturn(NotificationEntity.of(
+                        userEntityB, NotificationType.NEW_COMMENT_ON_POST, NotificationArgs.of(postEntity.getUserEntity().getId(), postId)
+                ));
+
+        // When && Then
+        Assertions.assertDoesNotThrow(() -> postService.addComment(request, postId, usernameB));
+
+        then(userEntityRepository).should().findByUsername(any());
+        then(postRepository).should().findById(any());
+        then(commentEntityRepository).should().save(any());
+        then(notificationEntityRepository).should().save(any());
+    }
+
+    @DisplayName("[Service] Given User Comments On Own Post - When Adding Comment - Success And Not Create Notification")
+    @Test
+    void givenUserCommentsOnOwnPost_whenAddingComment_thenSuccessAndNotCreateNotification() throws Exception {
+        // Given
+        Long postId = 1L;
         String username = "username";
         CommentCreateRequest request = createCommentCreateRequest("comment");
-        Optional<UserEntity> optionalUserEntity = createOptionalUserEntity(username);
-        PostEntity postEntity = createPostEntity(postId, "title", "body", optionalUserEntity.get());
+        UserEntity userEntity = createUserEntity(1L, username);
+        PostEntity postEntity = createPostEntity(postId, "title", "body", userEntity);
 
-
-        given(userEntityRepository.findByUsername(any())).willReturn(optionalUserEntity);
+        given(userEntityRepository.findByUsername(username)).willReturn(Optional.of(userEntity));
         given(postRepository.findById(any())).willReturn(Optional.of(postEntity));
-        given(commentEntityRepository.save(any())).willReturn(CommentEntity.of("comment", optionalUserEntity.get(), postEntity));
+        given(commentEntityRepository.save(any())).willReturn(CommentEntity.of("comment", userEntity, postEntity));
 
         // When && Then
         Assertions.assertDoesNotThrow(() -> postService.addComment(request, postId, username));
@@ -231,6 +258,7 @@ class PostServiceTest {
         then(userEntityRepository).should().findByUsername(any());
         then(postRepository).should().findById(any());
         then(commentEntityRepository).should().save(any());
+        then(notificationEntityRepository).shouldHaveNoInteractions();
     }
 
     private static CommentCreateRequest createCommentCreateRequest(String comment) {
@@ -247,6 +275,18 @@ class PostServiceTest {
                         Timestamp.from(Instant.now()),
                         Timestamp.from(Instant.now())
                 )
+        );
+    }
+
+    private static UserEntity createUserEntity(Long id, String username) {
+        return UserEntity.of(
+                id,
+                username,
+                "password",
+                UserRole.USER,
+                Timestamp.from(Instant.now()),
+                Timestamp.from(Instant.now()),
+                Timestamp.from(Instant.now())
         );
     }
 
