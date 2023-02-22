@@ -58,6 +58,10 @@ public class UserEntity {
         return UserEntity.of(null, username, password, null, null, null, null);
     }
 
+    public static UserEntity of(Long id, String username, String password) {
+        return UserEntity.of(id, username, password, null, null, null, null);
+    }
+
     public static UserEntity of(String username, String password, UserRole userRole) {
         return UserEntity.of(null, username, password, userRole, null, null, null);
     }
