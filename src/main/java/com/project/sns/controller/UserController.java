@@ -1,13 +1,17 @@
 package com.project.sns.controller;
 
 import com.project.sns.domain.UserEntity;
+import com.project.sns.dto.entity.UserDto;
 import com.project.sns.dto.request.UserJoinRequest;
 import com.project.sns.dto.request.UserLoginRequest;
 import com.project.sns.dto.response.NotificationResponse;
 import com.project.sns.dto.response.ResponseBody;
 import com.project.sns.dto.response.UserJoinResponse;
 import com.project.sns.dto.response.UserLoginResponse;
+import com.project.sns.exception.SnsApplicationException;
+import com.project.sns.exception.enums.ErrorCode;
 import com.project.sns.service.UserEntityService;
+import com.project.sns.util.ClassUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,7 +42,9 @@ public class UserController {
 
     @GetMapping("/notifications")
     public ResponseBody<Page<NotificationResponse>> fetchNotifications(Pageable pageable, Authentication authentication) {
-        Page<NotificationResponse> notifications = userEntityService.fetchNotifications(pageable, authentication.getName())
+        UserDto userDto = ClassUtils.getSafeCastInstance(authentication.getPrincipal(), UserDto.class);
+
+        Page<NotificationResponse> notifications = userEntityService.fetchNotifications(pageable, userDto.getId())
                 .map(NotificationResponse::fromDto);
 
         return ResponseBody.success("Success", notifications);

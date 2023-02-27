@@ -89,11 +89,9 @@ public class UserEntityService {
         return (username == null || username.isBlank() || password == null || password.isBlank());
     }
 
-    public Page<NotificationDto> fetchNotifications(Pageable pageable, String userName) {
-        // User 가 존재하는지 확인
-        UserEntity userEntity = getUserEntityOrThrowException(userName);
+    public Page<NotificationDto> fetchNotifications(Pageable pageable, Long userId) {
 
-        return notificationEntityRepository.findAllByUserEntity(userEntity, pageable)
+        return notificationEntityRepository.findAllByUserEntityId(userId, pageable)
                 .map(NotificationDto::fromEntity);
     }
 
