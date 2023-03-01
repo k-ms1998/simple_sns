@@ -32,7 +32,7 @@ public class NotificationEntity {
     private Long id;
 
     // 알람을 받는 사람
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity userEntity;
 
