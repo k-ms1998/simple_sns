@@ -10,7 +10,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Type;
 
 import java.sql.Timestamp;
 
@@ -21,7 +20,6 @@ import java.sql.Timestamp;
 public class NotificationDto {
 
     private Long id;
-    private UserDto user;
     private NotificationType notificationType;
     private NotificationArgs notificationArgs;
     private Timestamp registeredAt;
@@ -31,7 +29,6 @@ public class NotificationDto {
     public static NotificationDto fromEntity(NotificationEntity entity) {
         return new NotificationDto(
                 entity.getId(),
-                entity.getUserEntity().toDto(),
                 entity.getNotificationType(),
                 entity.getNotificationArgs(),
                 entity.getRegisteredAt(),

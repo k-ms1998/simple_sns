@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface NotificationEntityRepository extends JpaRepository<NotificationEntity, Long> {
 
-    Page<NotificationEntity> findAllByUserEntity(UserEntity userEntity, Pageable pageable);
+    Page<NotificationEntity> findAllByUserEntityId(Long userEntityId, Pageable pageable);
 }

@@ -88,6 +88,12 @@ public class PostService {
         if(userDoesNotMatch(userName, post)){
             throw new SnsApplicationException(ErrorCode.INVALID_PERMISSION, "User does not match.");
         }
+        
+        // Post랑 연관된 UpVote 삭제
+        upVoteEntityRepository.deleteAllByPostEntity(post);
+        
+        // Post랑 연관된 Comment 삭제
+        commentEntityRepository.deleteAllByPostEntity(post);
 
         // Post 삭제
         postRepository.delete(post);
