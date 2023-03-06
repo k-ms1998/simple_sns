@@ -7,6 +7,7 @@ import com.project.sns.dto.entity.UserDto;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
 import com.project.sns.repository.NotificationEntityRepository;
+import com.project.sns.repository.UserDtoCacheRepository;
 import com.project.sns.repository.UserEntityRepository;
 import com.project.sns.util.JwtTokenUtils;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -25,6 +28,7 @@ public class UserEntityService {
     private final UserEntityRepository userEntityRepository;
     private final NotificationEntityRepository notificationEntityRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final UserDtoCacheRepository userDtoCacheRepository;
 
     @Value("${jwt.secret-key}")
     private String secretKey;
@@ -56,16 +60,23 @@ public class UserEntityService {
         }
 
         /*
-        회원 가입 여부 체크
+        loadByUsername 으로 유저 가져오기
+        1. 캐시에 있는지 확인하고, 있으면 가져오기
+        2. 캐시에 없으면, DB에 접근해서 유저 가져오기
+        3. DB에도 없으면 예외 처리
          */
-        UserEntity userEntity = userEntityRepository.findByUsername(username)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, String.format("User \'%s\' doesn't exist.", username)));
-
+        UserDto userDto = loadUserByUsername(username);
+        
         /*
         비밀번호 체크
             -> 성공시 토큰 생성
          */
-        if (isCorrectPassword(userEntity, password, passwordEncoder)) {
+        if (isCorrectPassword(userDto.getPassword(), password, passwordEncoder)) {
+            /*
+            유저 정보 캐싱하기
+             */
+            userDtoCacheRepository.setUserDto(userDto);
+            
             /*
             토큰 생성
              */
@@ -75,14 +86,20 @@ public class UserEntityService {
         }
     }
 
+    /*
+    1. 캐시에서 해당 username의 유저가 있는지 확인
+    2. 없으면 DB에 접근해서 가져오기
+    3. DB에도 없으면 예외 처리
+     */
     public UserDto loadUserByUsername(String username) {
-        return userEntityRepository.findByUsername(username)
-                .map(UserDto::from)
-                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, String.format("User \'%s\' doesn't exist.", username)));
+        return userDtoCacheRepository.getUserDto(username)
+                .orElseGet(() -> userEntityRepository.findByUsername(username).map(UserDto::from)
+                        .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER, String.format("User \'%s\' doesn't exist.", username))));
+
     }
 
-    private static boolean isCorrectPassword(UserEntity userEntity, String password, BCryptPasswordEncoder passwordEncoder) {
-        return passwordEncoder.matches(password, userEntity.getPassword());
+    private static boolean isCorrectPassword(String targetPassword, String password, BCryptPasswordEncoder passwordEncoder) {
+        return passwordEncoder.matches(password, targetPassword);
     }
 
     private boolean areParametersInValid(String username, String password) {
