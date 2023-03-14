@@ -16,6 +16,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -24,28 +25,40 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private final String key;
     private final UserEntityService userEntityService;
 
+    private static final List<String> TOKEN_IN_PARAM_URLS = List.of("/users/notifications/subscribe");
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        /*
-        Header 가져오기
-         */
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (header == null || header.isBlank()) {
-            log.error("Empty Header.");
-            filterChain.doFilter(request, response);
-            return;
-        }
-        if (!header.startsWith("Bearer ")) {
-            log.error("Error occurred while fetching header.");
-            filterChain.doFilter(request, response);
-            return;
-        }
+        final String token;
+        try{
+            /*
+            현재 요청 api 가 TOKEN_IN_PARAMS_URLS 에 있을때 -> 헤더가 아닌 query param 에서 token 값을 가져와야하는 경로
+             */
+            String requestUri = request.getRequestURI();
+            if(TOKEN_IN_PARAM_URLS.contains(requestUri)){
+                log.info("Request with {}. Check the query param.", requestUri);
+                token = request.getQueryString().split("=")[1].trim();
+            }else{
+                /*
+                Header 가져오기
+                 */
+                String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+                if (header == null || header.isBlank()) {
+                    log.error("Empty Header.");
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                if (!header.startsWith("Bearer ")) {
+                    log.error("Error occurred while fetching header.");
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                /*
+                Header에서 토큰값 가져오기
+                 */
+                token = header.split(" ")[1].trim(); // 'Bearer {token}' 으로 저장되어 있음
+            }
 
-        /*
-        Header에서 토큰값 가져오기
-         */
-        try {
-            final String token = header.split(" ")[1].trim(); // 'Bearer {token}' 으로 저장되어 있음
             // token 이 expired 됐는지 확인
             if(JwtTokenUtils.isExpired(token, key)){
                 log.error("Token Expired.");

@@ -30,13 +30,15 @@ public class SpringSecurityConfig {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring().requestMatchers(
-                "/",
-                "/users/join",
-                "/users/login",
-                "/posts",
-                "/posts/upvote/{id}/count"
-        ).requestMatchers(HttpMethod.GET,
-                "/posts/comment/{id}");
+                        "/",
+                        "/users/join",
+                        "/users/login",
+                        "/posts",
+                        "/posts/upvote/{id}/count"
+                ).requestMatchers(HttpMethod.GET,
+                        "/posts/comment/{id}",
+                        "/users/notifications/subscribe/*")
+                .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 
     @Bean
