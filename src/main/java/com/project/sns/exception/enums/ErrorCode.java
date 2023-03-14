@@ -13,7 +13,8 @@ public enum ErrorCode {
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid Token."),
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "Bad Request."),
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "Post Not Found."),
-    INVALID_PERMISSION(HttpStatus.UNAUTHORIZED, "Permission is invalid.");
+    INVALID_PERMISSION(HttpStatus.UNAUTHORIZED, "Permission is invalid."),
+    NOTIFICATION_CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Notification connection failed.");
 
     private HttpStatus status;
     private String message;

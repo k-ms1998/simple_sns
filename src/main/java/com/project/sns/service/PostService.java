@@ -25,6 +25,8 @@ public class PostService {
     private final CommentEntityRepository commentEntityRepository;
     private final NotificationEntityRepository notificationEntityRepository;
 
+    private final NotificationService notificationService;
+
     public Page<PostDto> fetchAllPosts(Pageable pageable) {
         return postRepository.findAll(pageable)
                 .map(PostDto::from);
@@ -106,11 +108,11 @@ public class PostService {
         UserEntity userEntity = getUserEntityOrThrowException(userName);
 
         // Post 찾기
-        PostEntity post = getPostEntityOrThrowException(id);
+        PostEntity postEntity = getPostEntityOrThrowException(id);
 
         // UpVote 찾기 -> UserEntity와 PostEntity 로 존재하는지 찾기 -> 존재하지 않으면 새로 생성해서 반환
-        UpVoteEntity upVoteEntity = upVoteEntityRepository.findByUserEntityAndPostEntity(userEntity, post)
-                .orElse(UpVoteEntity.of(userEntity, post, false));
+        UpVoteEntity upVoteEntity = upVoteEntityRepository.findByUserEntityAndPostEntity(userEntity, postEntity)
+                .orElse(UpVoteEntity.of(userEntity, postEntity, false));
 
         upVoteEntity.updateUpVote();
         upVoteEntityRepository.save(upVoteEntity);
@@ -118,12 +120,15 @@ public class PostService {
 
         // 좋아요가 눌렀을 경우 && 좋아요 누른 유저와 포스트 작성한 유저가 다를 경우 알림 생성
         if(upVoteEntity.isUpVoted()){
-            if(isNotSameUser(userEntity, post)){
-                notificationEntityRepository.save(NotificationEntity.of(
-                        post.getUserEntity(),
+            if(isNotSameUser(userEntity, postEntity)){
+                NotificationEntity notificationEntity = notificationEntityRepository.save(NotificationEntity.of(
+                        postEntity.getUserEntity(),
                         NotificationType.NEW_LIKE_ON_POST,
-                        NotificationArgs.of(userEntity.getId(), post.getId())
+                        NotificationArgs.of(userEntity.getId(), postEntity.getId())
                 ));
+
+                // 웹 브라우저에 새로운 알림이 발생했다는 것을 알려줌 -> 알림 대상는 포스트의 작성자
+                notificationService.send(notificationEntity.getId(), postEntity.getUserEntity().getId());
             }
         }
     }
@@ -152,13 +157,16 @@ public class PostService {
         알림 생성:
             -> 댓글을 단 포스트의 주인에게, 현재 로그인한 유저가 댓글을 달았다는 알림 생성
             -> 댓글 작성자랑 포스트 작성자가 다를 경우에만 알림 생성
+            -> 웹 브라우저에 새로운 알림이 발생했다는 것을 알려줌 -> 알림 대상자는 포스트의 작성자
          */
         if(isNotSameUser(userEntity, postEntity)){
-            notificationEntityRepository.save(NotificationEntity.of(
+            NotificationEntity notificationEntity = notificationEntityRepository.save(NotificationEntity.of(
                     postEntity.getUserEntity(),
                     NotificationType.NEW_COMMENT_ON_POST,
                     NotificationArgs.of(userEntity.getId(), postEntity.getId())
             ));
+
+            notificationService.send(notificationEntity.getId(), postEntity.getUserEntity().getId());
         }
     }
 
