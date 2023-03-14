@@ -1,6 +1,5 @@
 package com.project.sns.service;
 
-import com.project.sns.dto.notification.NotificationEvent;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
 import com.project.sns.repository.SseEmitterRepository;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.util.Optional;
 
 @Slf4j
 @Service
