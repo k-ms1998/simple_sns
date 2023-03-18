@@ -47,6 +47,7 @@ import Slide from '@mui/material/Slide';
 // Data
 import axios from 'axios';
 
+
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
     children: React.ReactElement<any, any>,
@@ -61,8 +62,10 @@ function Alarm() {
   const [render, setRender] = useState(false);
   const [alarms, setAlarms] = useState([]);
   const [totalPage, setTotalPage] = useState(0);
+  const [alarmEvent, setAlarmEvent] = useState(undefined);
 
   const navigate = useNavigate();
+  let eventSource = undefined;
 
   const changePage = (pageNum) => {
     console.log('change pages');
@@ -75,7 +78,7 @@ function Alarm() {
   const handleGetAlarm = (pageNum, event) => {
     console.log('handleGetAlarm');
     axios({
-      url: '/users/notifications?size=5&page=' + pageNum,
+      url: '/users/notifications?size=30&page=' + pageNum,
       method: 'GET',
       headers: {
         Authorization: 'Bearer ' + localStorage.getItem('token'),
@@ -95,6 +98,30 @@ function Alarm() {
 
   useEffect(() => {
     handleGetAlarm();
+
+    eventSource = new EventSource("http://localhost:8080/users/notifications/subscribe?token=" + localStorage.getItem('token'));
+    // eventSource = new EventSource("https://kms-simple-sns.herokuapp.com/users/notifications/subscribe?token=" + localStorage.getItem('token'));
+    alert(eventSource);
+    setAlarmEvent(eventSource);
+
+    eventSource.addEventListener("open", function (event) {
+      console.log("connection opened");
+    });
+
+    eventSource.addEventListener("alarm", function (event) {
+        alert("Front-End: SseEmitter")
+        console.log(event.data);
+        handleGetAlarm();
+    });
+
+    eventSource.addEventListener("error", function (event) {
+      console.log(event.target.readyState);
+      if (event.target.readyState === EventSource.CLOSED) {
+        console.log("eventsource closed (" + event.target.readyState + ")");
+      }
+      eventSource.close();
+    });
+
   }, []);
 
   return (
