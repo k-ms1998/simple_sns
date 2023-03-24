@@ -107,7 +107,6 @@ function Feed() {
         setTotalPage(res.data.result.totalPages);
       })
       .catch((error) => {
-        alert(error);
         console.log(error);
         navigate('/authentication/sign-in');
       });
