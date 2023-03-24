@@ -26,6 +26,7 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
 	implementation 'com.vladmihalcea:hibernate-types-60:2.19.0' // hibernate 에서 기본으로 제공해주는 데이터 타입들 외의 타입들을 추가해줌
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis' // redis 설정
+	implementation 'org.springframework.kafka:spring-kafka:3.0.4' // kafka 설정
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	runtimeOnly 'com.h2database:h2'

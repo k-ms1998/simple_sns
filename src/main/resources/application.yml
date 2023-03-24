@@ -16,6 +16,27 @@ spring:
   data:
     redis:
       url: ${REDIS_URL} # Heroku CLI 에서 가져온 REDIS_URL 값 주입 (Heroku 사이트 X)
+  kafka:
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: SCRAM-SHA-512
+      sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="${KAFKA_USERNAME}" password="${KAFKA_PASSWORD}";
+    consumer:
+      properties.spring.json.trusted.packages: "*"
+      bootstrap-servers: ${KAFKA_SERVER_1}, ${KAFKA_SERVER_2}, ${KAFKA_SERVER_3}
+      group-id: boovnjrs-notification
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    listener:
+      ack-mode: MANUAL
+    producer:
+      bootstrap-servers: ${KAFKA_SERVER_1}, ${KAFKA_SERVER_2}, ${KAFKA_SERVER_3}
+      key-serializer: org.apache.kafka.common.serialization.LongSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties.enable.idempotence: false
+    topic:
+      notification: boovnjrs-notification
 
 jwt:
   secret-key: ${JWT_SECRET_KEY}
