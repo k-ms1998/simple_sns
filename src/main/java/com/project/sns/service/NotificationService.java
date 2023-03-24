@@ -1,8 +1,14 @@
 package com.project.sns.service;
 
+import com.project.sns.domain.NotificationArgs;
+import com.project.sns.domain.NotificationEntity;
+import com.project.sns.domain.UserEntity;
+import com.project.sns.domain.enums.NotificationType;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
+import com.project.sns.repository.NotificationEntityRepository;
 import com.project.sns.repository.SseEmitterRepository;
+import com.project.sns.repository.UserEntityRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,6 +25,8 @@ public class NotificationService {
     private static final String NOTIFICATION_NAME = "alarm"; // front-end 에서 알람을 가져오는 eventHandler 의 이름이랑 같도록 설정해서, SseEmitter 랑 연결
 
     private final SseEmitterRepository sseEmitterRepository;
+    private final NotificationEntityRepository notificationEntityRepository;
+    private final UserEntityRepository userEntityRepository;
 
     public SseEmitter connectNotification(Long userId) {
         SseEmitter sseEmitter = sseEmitterRepository.save(userId, new SseEmitter(DEFAULT_TIMEOUT));
@@ -42,27 +50,34 @@ public class NotificationService {
         return sseEmitter;
     }
 
-    public void send(Long notificationId, Long userId) {
-        log.info("notificationId: {}, userId: {}", notificationId, userId);
+    public void send(NotificationType type, NotificationArgs args, UserEntity receiver) {
+        NotificationEntity notificationEntity = notificationEntityRepository.save(NotificationEntity.of(receiver, type, args));
 
-        sseEmitterRepository.get(userId)
+        sseEmitterRepository.get(receiver.getId())
                 .ifPresentOrElse(sseEmitter -> {
                     log.info("sseEmitter: {}", sseEmitter.toString());
                     try {
                         sseEmitter.send(
                                 SseEmitter.event()
-                                        .id("id")
+                                        .id(notificationEntity.getId().toString())
                                         .name(NOTIFICATION_NAME)
                                         .data("sent")
                         );
                     } catch (IOException e) {
 //                        sseEmitter.complete();
 //                        log.error("e : {}", e.getMessage());
-                        sseEmitterRepository.delete(userId);
+                        sseEmitterRepository.delete(receiver.getId());
                         throw new SnsApplicationException(ErrorCode.NOTIFICATION_CONNECTION_ERROR);
                     }
                 }, () -> log.info("SseEmitter not found."));
 
+    }
+
+    public void send(NotificationType type, NotificationArgs args, Long receiverId){
+        UserEntity userEntity = userEntityRepository.findById(receiverId)
+                .orElseThrow(() -> new SnsApplicationException(ErrorCode.NON_EXISTING_USER));
+
+        this.send(type, args, userEntity);
     }
 
 }

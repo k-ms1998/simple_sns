@@ -4,9 +4,11 @@ import com.project.sns.domain.*;
 import com.project.sns.domain.enums.NotificationType;
 import com.project.sns.dto.entity.CommentDto;
 import com.project.sns.dto.entity.PostDto;
+import com.project.sns.dto.event.NotificationEvent;
 import com.project.sns.dto.request.CommentCreateRequest;
 import com.project.sns.exception.SnsApplicationException;
 import com.project.sns.exception.enums.ErrorCode;
+import com.project.sns.kafka.producer.NotificationProducer;
 import com.project.sns.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,6 +26,7 @@ public class PostService {
     private final UpVoteEntityRepository upVoteEntityRepository;
     private final CommentEntityRepository commentEntityRepository;
     private final NotificationEntityRepository notificationEntityRepository;
+    private final NotificationProducer notificationProducer;
 
     private final NotificationService notificationService;
 
@@ -121,14 +124,12 @@ public class PostService {
         // 좋아요가 눌렀을 경우 && 좋아요 누른 유저와 포스트 작성한 유저가 다를 경우 알림 생성
         if(upVoteEntity.isUpVoted()){
             if(isNotSameUser(userEntity, postEntity)){
-                NotificationEntity notificationEntity = notificationEntityRepository.save(NotificationEntity.of(
-                        postEntity.getUserEntity(),
-                        NotificationType.NEW_LIKE_ON_POST,
-                        NotificationArgs.of(userEntity.getId(), postEntity.getId())
-                ));
+                UserEntity receiver = postEntity.getUserEntity();
+                NotificationType notificationType = NotificationType.NEW_LIKE_ON_POST;
+                NotificationArgs notificationArgs = NotificationArgs.of(userEntity.getId(), postEntity.getId());
 
                 // 웹 브라우저에 새로운 알림이 발생했다는 것을 알려줌 -> 알림 대상는 포스트의 작성자
-                notificationService.send(notificationEntity.getId(), postEntity.getUserEntity().getId());
+                notificationProducer.send(NotificationEvent.of(receiver.getId(), notificationType, notificationArgs));
             }
         }
     }
@@ -160,13 +161,11 @@ public class PostService {
             -> 웹 브라우저에 새로운 알림이 발생했다는 것을 알려줌 -> 알림 대상자는 포스트의 작성자
          */
         if(isNotSameUser(userEntity, postEntity)){
-            NotificationEntity notificationEntity = notificationEntityRepository.save(NotificationEntity.of(
-                    postEntity.getUserEntity(),
-                    NotificationType.NEW_COMMENT_ON_POST,
-                    NotificationArgs.of(userEntity.getId(), postEntity.getId())
-            ));
+            UserEntity receiver = postEntity.getUserEntity();
+            NotificationType notificationType = NotificationType.NEW_COMMENT_ON_POST;
+            NotificationArgs notificationArgs = NotificationArgs.of(userEntity.getId(), postEntity.getId());
 
-            notificationService.send(notificationEntity.getId(), postEntity.getUserEntity().getId());
+            notificationProducer.send(NotificationEvent.of(receiver.getId(), notificationType, notificationArgs));
         }
     }
 
