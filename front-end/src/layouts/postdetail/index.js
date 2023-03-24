@@ -71,7 +71,7 @@ function PostDetail() {
   const handleLikePost = (event) => {
     console.log(localStorage.getItem('token'));
     axios({
-      url: '/posts/upvote/'+id,
+      url: '/posts/upvote/' + id,
       method: 'POST',
       headers: {
         Authorization: 'Bearer ' + localStorage.getItem('token'),
@@ -89,7 +89,7 @@ function PostDetail() {
   const handleLikeCounts = (event) => {
     console.log(localStorage.getItem('token'));
     axios({
-      url: '/posts/upvote/'+id+'/count',
+      url: '/posts/upvote/' + id + '/count',
       method: 'GET',
       headers: {
         Authorization: 'Bearer ' + localStorage.getItem('token'),
@@ -199,7 +199,7 @@ function PostDetail() {
                     </Grid>
                     <Grid item xs={6}>
                       <MDTypography variant="body2" textAlign="right">
-                        {comment.userName}
+                        {comment.username}
                       </MDTypography>
                     </Grid>
                   </Grid>

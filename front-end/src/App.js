@@ -57,7 +57,6 @@ import brandDark from 'assets/images/logo-ct-dark.png';
 import ModifyPost from 'layouts/modifypost';
 import PostDetail from 'layouts/postdetail';
 
-
 export default function App() {
   const [controller, dispatch] = useMaterialUIController();
   const {
@@ -73,7 +72,7 @@ export default function App() {
   const [onMouseEnter, setOnMouseEnter] = useState(false);
   const [rtlCache, setRtlCache] = useState(null);
   const { pathname } = useLocation();
-    
+
   // Cache for the rtl
   useMemo(() => {
     const cacheRtl = createCache({

@@ -78,7 +78,7 @@ function Alarm() {
   const handleGetAlarm = (pageNum, event) => {
     console.log('handleGetAlarm');
     axios({
-      url: '/users/notifications?size=30&page=' + pageNum,
+      url: '/users/notifications?size=3&page=' + pageNum,
       method: 'GET',
       headers: {
         Authorization: 'Bearer ' + localStorage.getItem('token'),
@@ -100,8 +100,7 @@ function Alarm() {
     handleGetAlarm();
 
     eventSource = new EventSource("http://localhost:8080/users/notifications/subscribe?token=" + localStorage.getItem('token'));
-    // eventSource = new EventSource("https://kms-simple-sns.herokuapp.com/users/notifications/subscribe?token=" + localStorage.getItem('token'));
-    alert(eventSource);
+
     setAlarmEvent(eventSource);
 
     eventSource.addEventListener("open", function (event) {
@@ -109,9 +108,8 @@ function Alarm() {
     });
 
     eventSource.addEventListener("alarm", function (event) {
-        alert("Front-End: SseEmitter")
-        console.log(event.data);
-        handleGetAlarm();
+       console.log(event.data);
+       handleGetAlarm();
     });
 
     eventSource.addEventListener("error", function (event) {
